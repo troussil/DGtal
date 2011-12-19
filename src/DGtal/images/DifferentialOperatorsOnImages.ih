@@ -207,6 +207,57 @@ godunovGradientModulus(const Point& aPoint, bool isPositive) const
   return g.norm(Vector::L_2); 
 }
 
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+forwardBackwardDifference2(const Point& aPoint, const Dimension& aDim) const
+{
+  Domain d = myU.domain(); 
+  Point next = getNext(aPoint, aDim);
+  bool nextInside = d.isInside(next); 
+  Point previous = getPrevious(aPoint, aDim);
+  bool previousInside = d.isInside(previous);
+ 
+  if (nextInside && previousInside )
+    return ( (myU(next) - 2*myU(aPoint) + myU(previous) ) / (myH*myH) ); 
+  else 
+    return 0;   
+}
+
+
+// template <typename TImage, typename TOutputValue>
+// inline
+// typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+// DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+// weightedDifference2(TImage& w, const Point& aPoint, const Dimension& aDim) const
+// {
+
+//   Domain d = myU.domain(); 
+//   ASSERT(w.domain().lowerBound() == d.lowerBound()); 
+//   ASSERT(w.domain().upperBound() == d.upperBound()); 
+
+//   Point next = getNext(aPoint, aDim);
+//   bool nextInside = d.isInside(next); 
+//   Point previous = getPrevious(aPoint, aDim);
+//   bool previousInside = d.isInside(previous);
+ 
+//   if (nextInside && previousInside )
+//     return ( ( harmonicAverage(w(next),w(aPoint))*(myU(next) - myU(aPoint)) )
+// 	     - ( harmonicAverage(w(aPoint),w(previous))*(myU(aPoint) - myU(previous)) ) 
+// 	     / (myH*myH); 
+//   else if ( (!nextInside) && previousInside )
+//     return ( ( ( w(aPoint) - harmonicAverage(w(aPoint),w(aPoint)) )*(myU(aPoint) - myU(previous)) ) 
+// 	     / (myH*myH); 
+//    else if ( (!nextInside) && previousInside )
+//      return ( ( ( harmonicAverage(w(next),w(aPoint)) - w(aPoint) )*(myU(next) - myU(aPoint)) ) 
+// 	      / (myH*myH); 
+//   else 
+//     ASSERT( false && "impossible case" ) ; 
+  
+// }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Internals                                                                 //
 

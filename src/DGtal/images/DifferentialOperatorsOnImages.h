@@ -105,7 +105,7 @@ namespace DGtal
      */
     bool isValid() const;
 
-    // ----------------------- Main services ------------------------------
+    // ----------------------- First order ------------------------------
     /**
      * Forward difference.
      *
@@ -188,9 +188,26 @@ namespace DGtal
      */
     double godunovGradientModulus ( const Point& aPoint, bool isPositive ) const; 
 
-    //forward/backward difference
+    // ----------------------- second order ------------------------------
+    /**
+     * Forward/backward second order difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return second derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue forwardBackwardDifference2 ( const Point& aPoint, const Dimension& aDim ) const; 
 
-    //backward/forward difference
+    // /**
+    //  * Weighted forward/backward second order difference.
+    //  *
+    //  * @param w image of weights
+    //  * @param aPoint the point where the derivative is computed
+    //  * @param aDim the axis along which the derivative is computed
+    //  * @return second derivative along axis @a aDim at @ aPoint
+    //  */
+    // OutputValue weightedDifference2 ( Image& w, const Point& aPoint, const Dimension& aDim ) const; 
+
 
     //central/central difference
 

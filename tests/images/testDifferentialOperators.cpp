@@ -121,6 +121,16 @@ bool first2dTest()
     nb++;
   }
 
+  {
+    bool flag = ( helper.forwardBackwardDifference2(c,0) == 2 )
+      && ( helper.forwardBackwardDifference2(a,0) == 0 ) 
+      && ( helper.forwardBackwardDifference2(d,0) == 0 );
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+
   trace.info() << "(" << nbok << "/" << nb << ") " << std::endl;
   trace.endBlock();
   return (nbok == nb);
