@@ -2,6 +2,7 @@ SET(DGTAL_TESTS_SRC
    testImage
    testImageSpanIterators
    testCheckImageConcept
+   testDifferentialOperators
    )
 
 SET(DGTAL_BENCH_SRC
