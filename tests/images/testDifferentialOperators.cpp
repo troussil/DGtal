@@ -39,19 +39,91 @@
 #include "DGtal/images/DifferentialOperatorsOnImages.h"
 
 
-//using namespace DGtal;
-//using namespace std;
-
-bool firstTest() 
+bool first2dTest() 
 {
 
-  typedef int Label; 
-  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<3,int > >, Label >  Image;
+  //small img
+  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<2,int > >, int >  Image;
   typedef Image::Point Point; 
-  Image img( Point(-5,-5,-5), Point(5,5,5) ); 
+  typedef Image::Vector Vector; 
+  Image img( Point(-1,-1), Point(1,1) ); 
   DGtal::DifferentialOperatorsOnImages<Image> helper(img); 
-  return true; 
 
+  for (int i = 0; i < 3; ++i)
+    {
+      img.setValue( Point(i-1,-1), i*i ); 
+      img.setValue( Point(i-1,0), i*i ); 
+      img.setValue( Point(i-1,1), i*i ); 
+    }
+
+  Point c(0,0); 
+  Point a(-1,0); 
+  Point d(1,0); 
+
+  //tests
+  unsigned int nbok = 0;
+  unsigned int nb = 0;  
+
+  trace.beginBlock ( "simple test" );
+
+  {
+    bool flag = ( helper.forwardDifference(c,0) == 3 ) 
+    && ( helper.forwardDifference(c,1) == 0 ) 
+    && ( helper.forwardDifference(a,0) == 1 ) 
+    && ( helper.forwardDifference(d,0) == 3 ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    bool flag = ( helper.backwardDifference(c,0) == 1 ) 
+    && ( helper.backwardDifference(c,1) == 0 ) 
+    && ( helper.backwardDifference(a,0) == 1 ) 
+    && ( helper.backwardDifference(d,0) == 3 ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    bool flag = false; 
+    flag = ( helper.centralDifference(c,0) == 2 ) 
+    && ( helper.centralDifference(c,1) == 0 ) 
+    && ( helper.centralDifference(a,0) == 1 ) 
+    && ( helper.centralDifference(d,0) == 3 ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    bool flag = ( helper.centralGradient(c) == Point(2,0) ) 
+    && ( helper.centralGradientModulus(a) == 1 ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    bool flag = ( helper.upwindGradientModulus(c,Vector(1,1)) == 1 )
+      && ( helper.upwindGradient(c,Vector(-1,-1)) == Point(3,0) ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    bool flag = ( helper.godunovGradientModulus(c,true) == 1 )
+      && ( helper.godunovGradientModulus(c,false) == 3 ); 
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  trace.info() << "(" << nbok << "/" << nb << ") " << std::endl;
+  trace.endBlock();
+  return (nbok == nb);
 }
 
 int main(int argc, char** argv)
@@ -63,8 +135,8 @@ int main(int argc, char** argv)
     trace.info() << " " << argv[ i ];
   trace.info() << endl;
 
-  bool res = firstTest() 
-;
+  bool res = first2dTest() 
+ ;
   
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
   trace.endBlock();

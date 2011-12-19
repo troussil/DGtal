@@ -41,10 +41,6 @@
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
 #include <iostream>
-#include <list>
-#include <cstdlib>
-#include <cmath>
-#include "DGtal/base/Common.h"
 #include "DGtal/images/CImageContainer.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -63,7 +59,7 @@ namespace DGtal
    *
    * @tparam TImage type of image 
    */
-  template <typename TImage>
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
   class DifferentialOperatorsOnImages
   {
 
@@ -74,18 +70,20 @@ namespace DGtal
   public:
 
     typedef TImage Image;
-    typedef typename Image::Value Value; 
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
     typedef typename Image::Point Point;
     typedef typename Image::Vector Vector;  
     typedef typename Image::Domain Domain;
 
-    typedef typename Image::iterator Iterator;
-    typedef typename Image::const_iterator ConstIterator;
+    // typedef typename Image::iterator Iterator;
+    // typedef typename Image::const_iterator ConstIterator;
 
     typedef typename Image::Dimension Dimension;
     static const typename Image::Dimension dimension = Image::dimension;
    
-
+    typedef DGtal::PointVector<dimension, OutputValue> Gradient; 
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -107,12 +105,100 @@ namespace DGtal
      */
     bool isValid() const;
 
+    // ----------------------- Main services ------------------------------
+    /**
+     * Forward difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue forwardDifference ( const Point& aPoint, const Dimension& aDim ) const; 
 
     /**
-     * Writes/Displays the object on an output stream.
-     * @param out the output stream where the object is written.
+     * Backward difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
      */
-    void selfDisplay ( std::ostream & out ) const;
+    OutputValue backwardDifference ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    /**
+     * central difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue centralDifference ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    /**
+     * Gradient
+     *
+     * @param aPoint the point where the gradient is computed
+     * @return the gradient of @a myU at @a aPoint
+     */
+    Gradient centralGradient ( const Point& aPoint ) const; 
+
+    /**
+     * Gradient modulus
+     *
+     * @param aPoint the point where the gradient is computed
+     * @return modulus of the gradient of @a myU at @a aPoint
+     */
+    double centralGradientModulus ( const Point& aPoint ) const; 
+
+    /**
+     * Gradient computed from the upwind scheme
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param aVector displacement vector 
+     * @return the gradient of @a myU at @a aPoint
+     */
+    Gradient upwindGradient ( const Point& aPoint, const Vector& aVector ) const; 
+
+    /**
+     * Modulus of the gradient computed from the upwind scheme
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param aVector displacement vector 
+     * @return modulus of the gradient of @a myU at @a aPoint
+     */
+    double upwindGradientModulus ( const Point& aPoint, const Vector& aVector ) const; 
+
+    /**
+     * Gradient computed from the Godunov scheme
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param isPositive boolean equal to 'true' if the displacement vector
+     * has the same orientation as the normal to the interface
+     * @return the gradient of @a myU at @a aPoint
+     */
+    DGtal::PointVector<TImage::dimension,TOutputValue>
+    godunovGradient ( const Point& aPoint, bool isPositive ) const; 
+
+    /**
+     * Gradient modulus computed from the Godunov scheme
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param isPositive boolean equal to 'true' if the displacement vector
+     * has the same orientation as the normal to the interface
+     * @return modulus of the gradient of @a myU at @a aPoint
+     */
+    double godunovGradientModulus ( const Point& aPoint, bool isPositive ) const; 
+
+    //forward/backward difference
+
+    //backward/forward difference
+
+    //central/central difference
+
+    //laplacian
+
+    //mean curvature
+
+    //weighted laplacian
 
 
     // ------------------------- Protected Datas ------------------------------
@@ -125,11 +211,10 @@ namespace DGtal
      */
     Image& myU; 
 
-     /**
-     * grid step
+    /**
+     * Grid step
      */
-    double myH; 
-
+    OutputValue myH; 
 
     // ------------------------- Hidden services ------------------------------
   protected:
@@ -161,18 +246,31 @@ namespace DGtal
     // ------------------------- Internals ------------------------------------
   private:
 
+    /**
+     * Return the point following @a aPoint along axis @a aDim.
+     *
+     * @param aPoint any point
+     * @param aDim the axis along which the @a aPoint is shifted
+     * @return point following @a aPoint along axis @a aDim
+     */
+    Point getNext ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    /**
+     * Return the point preceeding @a aPoint along axis @a aDim.
+     *
+     * @param aPoint any point
+     * @param aDim the axis along which the @a aPoint is shifted
+     * @return point preceeding @a aPoint along axis @a aDim
+     */
+    Point getPrevious ( const Point& aPoint, const Dimension& aDim ) const; 
+
+
+    //arithmetical average, harmonic average
+
+
   }; // end of class DifferentialOperatorsOnImages
 
 
-  /**
-   * Overloads 'operator<<' for displaying objects of class 'DifferentialOperatorsOnImages'.
-   * @param out the output stream where the object is written.
-   * @param object the object of class 'DifferentialOperatorsOnImages' to write.
-   * @return the output stream after the writing.
-   */
-   template <typename TImage>
-  std::ostream&
-  operator<< ( std::ostream & out, const DifferentialOperatorsOnImages<TImage> & object );
 
 
 } // namespace DGtal

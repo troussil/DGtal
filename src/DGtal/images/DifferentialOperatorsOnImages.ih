@@ -39,55 +39,199 @@
 // ----------------------- Standard services ------------------------------
 
 
-template <typename TImage>
+template <typename TImage, typename TOutputValue>
 inline
-DGtal::DifferentialOperatorsOnImages<TImage>
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>
 ::DifferentialOperatorsOnImages( Image& aStartingImage )
-: myU( aStartingImage ), myH( 1 )
+  : myU( aStartingImage ), myH( 1 )
 {
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TOutputValue>
 inline
-DGtal::DifferentialOperatorsOnImages<TImage>::~DifferentialOperatorsOnImages()
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>
+::~DifferentialOperatorsOnImages()
 {
 }
 
-
-
-
-template <typename TImage>
-inline
-void
-DGtal::DifferentialOperatorsOnImages<TImage>::selfDisplay ( std::ostream & out ) const
-{
-  out << "[DifferentialOperatorsOnImages]\n";
-  out << "\n";
-}
-
-template <typename TImage>
+template <typename TImage, typename TOutputValue>
 inline
 bool
-DGtal::DifferentialOperatorsOnImages<TImage>::isValid() const
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>
+::isValid() const
 {
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// main functions                                                            //
 
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+forwardDifference(const Point& aPoint, const Dimension& aDim) const
+{
+  Point next = getNext(aPoint, aDim);
+  if ( myU.domain().isInside(next) )
+    return ( (myU(next) - myU(aPoint)) / myH ); 
+  else 
+    return backwardDifference(aPoint, aDim); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+backwardDifference(const Point& aPoint, const Dimension& aDim) const
+{
+  Point previous = getPrevious(aPoint, aDim);
+  if ( myU.domain().isInside(previous) )
+    return ( (myU(aPoint) - myU(previous)) / myH ); 
+  else 
+    return forwardDifference(aPoint, aDim); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+centralDifference(const Point& aPoint, const Dimension& aDim) const
+{
+  Domain d = myU.domain(); 
+  Point next = getNext(aPoint, aDim);
+  bool nextInside = d.isInside(next); 
+  Point previous = getPrevious(aPoint, aDim);
+  bool previousInside = d.isInside(previous);
+ 
+  if (nextInside && previousInside )
+    return ( (myU(next) - myU(previous)) / (2*myH) ); 
+  else if ( nextInside && (!previousInside) )
+    return ( (myU(next) - myU(aPoint)) / myH ); 
+  else if ( (!nextInside) && previousInside )
+    return ( (myU(aPoint) - myU(previous)) / myH ); 
+  else 
+    ASSERT( false && "impossible case" ) ; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::Gradient
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+centralGradient(const Point& aPoint) const
+{
+  Gradient g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      g.at(k) = centralDifference(aPoint,k); 
+    }
+  return g; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+centralGradientModulus(const Point& aPoint) const
+{
+  Gradient g = centralGradient(aPoint); 
+  return g.norm(Vector::L_2); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::Gradient
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+upwindGradient(const Point& aPoint, const Vector& aVector) const
+{
+  Gradient g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      if (aVector.at(k) > 0) 
+	g.at(k) = backwardDifference(aPoint,k); 
+      else if (aVector.at(k) < 0)
+	g.at(k) = forwardDifference(aPoint,k);
+      else //== 0
+	g.at(k) = 0; 
+    }
+  return g; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+upwindGradientModulus(const Point& aPoint, const Vector& aVector) const
+{
+  Gradient g = upwindGradient(aPoint, aVector); 
+  return g.norm(Vector::L_2); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::PointVector<TImage::dimension,TOutputValue>
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+godunovGradient(const Point& aPoint, bool isPositive) const
+{
+  DGtal::PointVector<TImage::dimension,TOutputValue> g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      if (isPositive)
+	{
+	  OutputValue a = backwardDifference(aPoint,k);
+	  if (a < 0) a = 0; 
+	  OutputValue b = forwardDifference(aPoint,k);
+	  if (b > 0) b = 0; 
+	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	}
+      else 
+	{
+	  OutputValue a = backwardDifference(aPoint,k);
+	  if (a > 0) a = 0; 
+	  OutputValue b = forwardDifference(aPoint,k);
+	  if (b < 0) b = 0; 
+	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	} 
+    }
+  return g; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+godunovGradientModulus(const Point& aPoint, bool isPositive) const
+{
+  Gradient g = godunovGradient(aPoint, isPositive); 
+  return g.norm(Vector::L_2); 
+}
 
 ///////////////////////////////////////////////////////////////////////////////
-// Implementation of inline functions                                        //
+// Internals                                                                 //
 
-template <typename TImage>
+template <typename TImage, typename TOutputValue>
 inline
-std::ostream&
-DGtal::operator<< ( std::ostream & out, 
-		  const DifferentialOperatorsOnImages<TImage> & object )
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::Point
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+getNext(const Point& aPoint, const Dimension& aDim) const
 {
-  object.selfDisplay( out );
-  return out;
+  Point next(aPoint); 
+  next.at(aDim) += 1; 
+  return next; 
 }
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::Point
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+getPrevious(const Point& aPoint, const Dimension& aDim) const
+{
+  Point p(aPoint); 
+  p.at(aDim) -= 1; 
+  return p; 
+}
+
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
