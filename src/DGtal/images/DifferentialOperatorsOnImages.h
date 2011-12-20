@@ -77,9 +77,6 @@ namespace DGtal
     typedef typename Image::Vector Vector;  
     typedef typename Image::Domain Domain;
 
-    // typedef typename Image::iterator Iterator;
-    // typedef typename Image::const_iterator ConstIterator;
-
     typedef typename Image::Dimension Dimension;
     static const typename Image::Dimension dimension = Image::dimension;
    
@@ -93,6 +90,14 @@ namespace DGtal
      * @param aStartingImage  any image of signed values
      */
     DifferentialOperatorsOnImages( Image& aStartingImage );
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length 
+     */
+    DifferentialOperatorsOnImages( Image& aStartingImage, const OutputValue& aGridStep );
 
     /**
      * Destructor. Does nothing.
@@ -198,25 +203,55 @@ namespace DGtal
      */
     OutputValue forwardBackwardDifference2 ( const Point& aPoint, const Dimension& aDim ) const; 
 
-    // /**
-    //  * Weighted forward/backward second order difference.
-    //  *
-    //  * @param w image of weights
-    //  * @param aPoint the point where the derivative is computed
-    //  * @param aDim the axis along which the derivative is computed
-    //  * @return second derivative along axis @a aDim at @ aPoint
-    //  */
-    // OutputValue weightedDifference2 ( Image& w, const Point& aPoint, const Dimension& aDim ) const; 
+    /**
+     * Laplacian.
+     *
+     * @param aPoint the point where the laplacian is computed
+     * @return laplacian of @myU at @ aPoint
+     */
+    OutputValue laplacian ( const Point& aPoint ) const; 
+    
 
+    /**
+     * Weighted forward/backward second order difference.
+     * The weights are the values of @w , divided by 
+     * the gradients modulii.
+     *
+     * @param w image of weights
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return second derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue weightedDifference2 ( Image& w, const Point& aPoint, const Dimension& aDim ) const; 
 
-    //central/central difference
+    /**
+     * Normalized forward/backward second order difference 
+     * by the gradients modulii.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return second derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue normalizedDifference2 ( const Point& aPoint, const Dimension& aDim ) const; 
 
-    //laplacian
+    /**
+     * Weighted mean curvature
+     *
+     * @param aImg image of weights
+     * @param aPoint the point where the curvature is computed
+     * @return weighted mean curvature of @myU at @ aPoint
+     */
+    OutputValue weightedMeanCurvature ( Image& aImg, const Point& aPoint ) const; 
 
-    //mean curvature
+    /**
+     * Mean curvature
+     *
+     * @param aPoint the point where the curvature is computed
+     * @return mean curvature of @myU at @ aPoint
+     */
+    OutputValue meanCurvature ( const Point& aPoint ) const; 
 
-    //weighted laplacian
-
+    
 
     // ------------------------- Protected Datas ------------------------------
   protected:
@@ -281,8 +316,19 @@ namespace DGtal
      */
     Point getPrevious ( const Point& aPoint, const Dimension& aDim ) const; 
 
+    /**
+     * Return the harmonic average of @a aV1 and @a aV2, 
+     * @a aV1 and @a aV2 being normalized by @a aN1 and @a aN2.
+     *
+     * @param aV1 a first value
+     * @param aN1 any value dividing @a aV1
+     * @param aV2 a second value
+     * @param aN2 any value dividing @a aV2
+     * @return the normalized harmonic average of @a aV1 and @a aV2
+     */
+    double normalizedAverage ( const Value& aV1, const double& aN1, 
+			       const Value& aV2, const double& aN2 ) const; 
 
-    //arithmetical average, harmonic average
 
 
   }; // end of class DifferentialOperatorsOnImages

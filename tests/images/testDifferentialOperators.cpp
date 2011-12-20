@@ -47,7 +47,6 @@ bool first2dTest()
   typedef Image::Point Point; 
   typedef Image::Vector Vector; 
   Image img( Point(-1,-1), Point(1,1) ); 
-  DGtal::DifferentialOperatorsOnImages<Image> helper(img); 
 
   for (int i = 0; i < 3; ++i)
     {
@@ -61,6 +60,9 @@ bool first2dTest()
   Point d(1,0); 
 
   //tests
+  DGtal::DifferentialOperatorsOnImages<Image> helper(img); 
+  DGtal::DifferentialOperatorsOnImages<Image,double> helper2(img); 
+
   unsigned int nbok = 0;
   unsigned int nb = 0;  
 
@@ -99,7 +101,9 @@ bool first2dTest()
 
   {
     bool flag = ( helper.centralGradient(c) == Point(2,0) ) 
-    && ( helper.centralGradientModulus(a) == 1 ); 
+    && ( helper.centralGradientModulus(a) == 1 ) 
+    && ( helper.centralGradientModulus(c) == 2 )  
+    && ( helper.centralGradientModulus(d) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
@@ -130,6 +134,45 @@ bool first2dTest()
     nb++;
   }
 
+  {
+    //weights
+    Image w( Point(-1,-1), Point(1,1) ); 
+
+    for (int i = 0; i < 3; ++i)
+      {
+	w.setValue( Point(i-1,-1), i+1 ); 
+	w.setValue( Point(i-1,0), i+1 ); 
+	w.setValue( Point(i-1,1), i+1 ); 
+      }
+
+    bool flag = ( helper.weightedDifference2(w,c,0) == 2 )
+      && ( helper.normalizedDifference2(c,0) == 0 )
+      && ( ( helper2.normalizedDifference2(c,0) - (8/(double)15) ) < 0.0001 )
+      && ( ( helper2.weightedMeanCurvature(w,c) - 2 ) < 0.0001 )
+      && ( ( helper2.meanCurvature(c) - (8/(double)15) ) < 0.0001 )
+      && ( ( helper2.meanCurvature(c) - (8/(double)15) ) < 0.0001 )
+      && ( helper.laplacian(c) == 2 )
+      ;
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
+
+  {
+    DGtal::DifferentialOperatorsOnImages<Image> helper3(img,2); 
+    DGtal::DifferentialOperatorsOnImages<Image,double> helper4(img,2); 
+    DGtal::DifferentialOperatorsOnImages<Image,double> helper5(img,0.5); 
+
+    bool flag = ( helper3.centralDifference(c,0) == 1 )
+      && ( helper3.centralDifference(a,0) == 0 )
+      && ( helper4.centralDifference(a,0) == 0.5 )
+      && ( helper5.centralDifference(c,0) == 4 )
+      && ( helper5.centralDifference(d,0) == 6 )
+      ;
+    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
+    nbok += flag ? 1 : 0; 
+    nb++;
+  }
 
   trace.info() << "(" << nbok << "/" << nb << ") " << std::endl;
   trace.endBlock();

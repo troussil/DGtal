@@ -47,6 +47,14 @@ DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>
 {
 }
 
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>
+::DifferentialOperatorsOnImages( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
 
 template <typename TImage, typename TOutputValue>
 inline
@@ -104,7 +112,7 @@ centralDifference(const Point& aPoint, const Dimension& aDim) const
   bool nextInside = d.isInside(next); 
   Point previous = getPrevious(aPoint, aDim);
   bool previousInside = d.isInside(previous);
- 
+
   if (nextInside && previousInside )
     return ( (myU(next) - myU(previous)) / (2*myH) ); 
   else if ( nextInside && (!previousInside) )
@@ -136,7 +144,7 @@ DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
 centralGradientModulus(const Point& aPoint) const
 {
   Gradient g = centralGradient(aPoint); 
-  return g.norm(Vector::L_2); 
+  return g.norm(Gradient::L_2); 
 }
 
 template <typename TImage, typename TOutputValue>
@@ -165,7 +173,7 @@ DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
 upwindGradientModulus(const Point& aPoint, const Vector& aVector) const
 {
   Gradient g = upwindGradient(aPoint, aVector); 
-  return g.norm(Vector::L_2); 
+  return g.norm(Gradient::L_2); 
 }
 
 template <typename TImage, typename TOutputValue>
@@ -204,7 +212,7 @@ DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
 godunovGradientModulus(const Point& aPoint, bool isPositive) const
 {
   Gradient g = godunovGradient(aPoint, isPositive); 
-  return g.norm(Vector::L_2); 
+  return g.norm(Gradient::L_2); 
 }
 
 template <typename TImage, typename TOutputValue>
@@ -225,37 +233,132 @@ forwardBackwardDifference2(const Point& aPoint, const Dimension& aDim) const
     return 0;   
 }
 
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+laplacian(const Point& aPoint) const
+{
+  OutputValue sum = 0; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      sum += forwardBackwardDifference2(aPoint,k); 
+    }
+  return sum; 
+}
 
-// template <typename TImage, typename TOutputValue>
-// inline
-// typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
-// DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
-// weightedDifference2(TImage& w, const Point& aPoint, const Dimension& aDim) const
-// {
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+weightedDifference2(TImage& w, const Point& aPoint, const Dimension& aDim) const
+{
 
-//   Domain d = myU.domain(); 
-//   ASSERT(w.domain().lowerBound() == d.lowerBound()); 
-//   ASSERT(w.domain().upperBound() == d.upperBound()); 
+  Domain d = myU.domain(); 
+  ASSERT(w.domain().lowerBound() == d.lowerBound()); 
+  ASSERT(w.domain().upperBound() == d.upperBound()); 
 
-//   Point next = getNext(aPoint, aDim);
-//   bool nextInside = d.isInside(next); 
-//   Point previous = getPrevious(aPoint, aDim);
-//   bool previousInside = d.isInside(previous);
- 
-//   if (nextInside && previousInside )
-//     return ( ( harmonicAverage(w(next),w(aPoint))*(myU(next) - myU(aPoint)) )
-// 	     - ( harmonicAverage(w(aPoint),w(previous))*(myU(aPoint) - myU(previous)) ) 
-// 	     / (myH*myH); 
-//   else if ( (!nextInside) && previousInside )
-//     return ( ( ( w(aPoint) - harmonicAverage(w(aPoint),w(aPoint)) )*(myU(aPoint) - myU(previous)) ) 
-// 	     / (myH*myH); 
-//    else if ( (!nextInside) && previousInside )
-//      return ( ( ( harmonicAverage(w(next),w(aPoint)) - w(aPoint) )*(myU(next) - myU(aPoint)) ) 
-// 	      / (myH*myH); 
-//   else 
-//     ASSERT( false && "impossible case" ) ; 
+  Point next = getNext(aPoint, aDim);
+  bool nextInside = d.isInside(next); 
+  Point previous = getPrevious(aPoint, aDim);
+  bool previousInside = d.isInside(previous);
+  double mod = centralGradientModulus(aPoint); 
+
+  if (nextInside && previousInside )
+    {
+      double nMod = centralGradientModulus(next); 
+      double pMod = centralGradientModulus(previous); 
+      return ( ( normalizedAverage(w(next),nMod,w(aPoint),mod)*(myU(next) - myU(aPoint)) )
+	       - ( normalizedAverage(w(aPoint),mod,w(previous),pMod)*(myU(aPoint) - myU(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) ); 
+    }
+  else if ( (!nextInside) && previousInside )
+    {
+      double pMod = centralGradientModulus(previous); 
+      return ( ( ( w(aPoint) - normalizedAverage(w(previous),pMod,w(aPoint),mod) )
+		 *(myU(aPoint) - myU(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) );
+    } 
+   else if ( (!nextInside) && previousInside )
+     {
+       double nMod = centralGradientModulus(next); 
+       return ( ( ( normalizedAverage(w(next),nMod,w(aPoint),mod) - w(aPoint) )
+		*(myU(next) - myU(aPoint)) ) 
+	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
+     }
+  else 
+    ASSERT( false && "impossible case" ) ; 
   
-// }
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+normalizedDifference2(const Point& aPoint, const Dimension& aDim) const
+{
+
+  Domain d = myU.domain(); 
+  Point next = getNext(aPoint, aDim);
+  bool nextInside = d.isInside(next); 
+  Point previous = getPrevious(aPoint, aDim);
+  bool previousInside = d.isInside(previous);
+  double mod = centralGradientModulus(aPoint); 
+
+  if (nextInside && previousInside )
+    {
+      double nMod = centralGradientModulus(next); 
+      double pMod = centralGradientModulus(previous);   
+      return ( ( normalizedAverage(1,nMod,1,mod)*(myU(next) - myU(aPoint)) )
+	       - ( normalizedAverage(1,mod,1,pMod)*(myU(aPoint) - myU(previous)) ) 
+	       / NumberTraits<Value>::castToDouble(myH*myH) ); 
+    }
+  else if ( (!nextInside) && previousInside )
+    {
+      double pMod = centralGradientModulus(previous); 
+      return ( ( ( 1 - normalizedAverage(1,pMod,1,mod) )
+		 *(myU(aPoint) - myU(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) );
+    } 
+   else if ( (!nextInside) && previousInside )
+     {
+       double nMod = centralGradientModulus(next); 
+       return ( ( ( normalizedAverage(1,nMod,1,mod) - 1 )
+		*(myU(next) - myU(aPoint)) ) 
+	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
+     }
+  else 
+    ASSERT( false && "impossible case" ) ; 
+  
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+weightedMeanCurvature(Image& aImg, const Point& aPoint) const
+{
+  OutputValue sum = 0; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      sum += weightedDifference2(aImg, aPoint,k); 
+    }
+  return sum; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::OutputValue
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+meanCurvature(const Point& aPoint) const
+{
+  OutputValue sum = 0; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      sum += normalizedDifference2(aPoint,k); 
+    }
+  return sum; 
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -283,6 +386,21 @@ getPrevious(const Point& aPoint, const Dimension& aDim) const
   return p; 
 }
 
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::DifferentialOperatorsOnImages<TImage, TOutputValue>::
+normalizedAverage( const Value& aV1, const double& aN1, 
+		   const Value& aV2, const double& aN2 ) const
+{
+  ASSERT(aV1 != 0);
+  ASSERT(aV2 != 0);
+  double q1 = aN1 / NumberTraits<Value>::castToDouble(aV1);
+  double q2 = aN2 / NumberTraits<Value>::castToDouble(aV2); 
+  double som = q1 + q2; 
+  if (som == 0) return 0; 
+  else return 2/som;   
+}
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
