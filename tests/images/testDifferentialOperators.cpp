@@ -60,75 +60,86 @@ bool first2dTest()
   Point d(1,0); 
 
   //tests
-  DGtal::DifferentialOperatorsOnImages<Image> helper(img); 
-  DGtal::DifferentialOperatorsOnImages<Image,double> helper2(img); 
-
   unsigned int nbok = 0;
   unsigned int nb = 0;  
 
-  trace.beginBlock ( "simple test" );
+  trace.beginBlock ( "unit tests" );
 
   {
-    bool flag = ( helper.forwardDifference(c,0) == 3 ) 
-    && ( helper.forwardDifference(c,1) == 0 ) 
-    && ( helper.forwardDifference(a,0) == 1 ) 
-    && ( helper.forwardDifference(d,0) == 3 ); 
+    DGtal::ForwardDifference<Image> fd(img); 
+
+    bool flag = ( fd(c,0) == 3 ) 
+    && ( fd(c,1) == 0 ) 
+    && ( fd(a,0) == 1 ) 
+    && ( fd(d,0) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = ( helper.backwardDifference(c,0) == 1 ) 
-    && ( helper.backwardDifference(c,1) == 0 ) 
-    && ( helper.backwardDifference(a,0) == 1 ) 
-    && ( helper.backwardDifference(d,0) == 3 ); 
+    DGtal::BackwardDifference<Image> bd(img); 
+
+    bool flag = ( bd(c,0) == 1 ) 
+    && ( bd(c,1) == 0 ) 
+    && ( bd(a,0) == 1 ) 
+    && ( bd(d,0) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = false; 
-    flag = ( helper.centralDifference(c,0) == 2 ) 
-    && ( helper.centralDifference(c,1) == 0 ) 
-    && ( helper.centralDifference(a,0) == 1 ) 
-    && ( helper.centralDifference(d,0) == 3 ); 
+    DGtal::CentralDifference<Image> cd(img); 
+
+    bool flag = ( cd(c,0) == 2 ) 
+    && ( cd(c,1) == 0 ) 
+    && ( cd(a,0) == 1 ) 
+    && ( cd(d,0) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = ( helper.centralGradient(c) == Point(2,0) ) 
-    && ( helper.centralGradientModulus(a) == 1 ) 
-    && ( helper.centralGradientModulus(c) == 2 )  
-    && ( helper.centralGradientModulus(d) == 3 ); 
+    DGtal::Gradient<DGtal::CentralDifference<Image> > g(img); 
+    DGtal::GradientModulus<DGtal::Gradient<DGtal::CentralDifference<Image> > > m(img);  
+    bool flag = ( g(c) == Point(2,0) ) 
+    && ( m(a) == 1 ) 
+    && ( m(c) == 2 )  
+    && ( m(d) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = ( helper.upwindGradientModulus(c,Vector(1,1)) == 1 )
-      && ( helper.upwindGradient(c,Vector(-1,-1)) == Point(3,0) ); 
+    DGtal::UpwindGradient<Image> g(img); 
+    bool flag = ( g(c,Vector(1,1)) == Point(1,0) )
+      && ( g(c,Vector(-1,-1)) == Point(3,0) ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = ( helper.godunovGradientModulus(c,true) == 1 )
-      && ( helper.godunovGradientModulus(c,false) == 3 ); 
+    DGtal::GodunovGradient<Image> g(img); 
+    DGtal::GradientModulus<DGtal::GodunovGradient<Image> > m(g); 
+    DGtal::GodunovGradient<Image> g2(img,false); 
+    DGtal::GradientModulus<DGtal::GodunovGradient<Image> > m2(g2); 
+
+    bool flag = ( m(c) == 1 )
+      && ( m2(c) == 3 ); 
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
   {
-    bool flag = ( helper.forwardBackwardDifference2(c,0) == 2 )
-      && ( helper.forwardBackwardDifference2(a,0) == 0 ) 
-      && ( helper.forwardBackwardDifference2(d,0) == 0 );
+    DGtal::Difference2<Image> diff(img); 
+    bool flag = ( diff(c,0) == 2 )
+      && ( diff(a,0) == 0 ) 
+      && ( diff(d,0) == 0 );
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
@@ -145,38 +156,66 @@ bool first2dTest()
 	w.setValue( Point(i-1,1), i+1 ); 
       }
 
-    bool flag = ( helper.weightedDifference2(w,c,0) == 2 )
-      && ( helper.normalizedDifference2(c,0) == 0 )
-      && ( ( helper2.normalizedDifference2(c,0) - (8/(double)15) ) < 0.0001 )
-      && ( ( helper2.weightedMeanCurvature(w,c) - 2 ) < 0.0001 )
-      && ( ( helper2.meanCurvature(c) - (8/(double)15) ) < 0.0001 )
-      && ( ( helper2.meanCurvature(c) - (8/(double)15) ) < 0.0001 )
-      && ( helper.laplacian(c) == 2 )
+    DGtal::WeightedDifference2<Image> wd(img,w); 
+    DGtal::NormalizedDifference2<Image> nd(img); 
+    DGtal::NormalizedDifference2<Image,double> nd2(img); 
+    DGtal::Divergence<DGtal::WeightedDifference2<Image> > wmc(wd); 
+    DGtal::Divergence<DGtal::NormalizedDifference2<Image,double> > mc(nd2); 
+    DGtal::Divergence<DGtal::Difference2<Image> > laplacian(img); 
+
+    bool flag = ( wd(c,0) == 2 )
+      && ( nd(c,0) == 0 )
+      && ( ( nd2(c,0) - (8/(double)15) ) < 0.0001 )
+      && ( ( wmc(c) - 2 ) < 0.0001 )
+      && ( ( mc(c) - (8/(double)15) ) < 0.0001 )
+      && ( laplacian(c) == 2 )
       ;
     trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
     nbok += flag ? 1 : 0; 
     nb++;
   }
 
-  {
-    DGtal::DifferentialOperatorsOnImages<Image> helper3(img,2); 
-    DGtal::DifferentialOperatorsOnImages<Image,double> helper4(img,2); 
-    DGtal::DifferentialOperatorsOnImages<Image,double> helper5(img,0.5); 
-
-    bool flag = ( helper3.centralDifference(c,0) == 1 )
-      && ( helper3.centralDifference(a,0) == 0 )
-      && ( helper4.centralDifference(a,0) == 0.5 )
-      && ( helper5.centralDifference(c,0) == 4 )
-      && ( helper5.centralDifference(d,0) == 6 )
-      ;
-    trace.info() << ((flag)? "Passed": "Failed") << std::endl; 
-    nbok += flag ? 1 : 0; 
-    nb++;
-  }
 
   trace.info() << "(" << nbok << "/" << nb << ") " << std::endl;
   trace.endBlock();
   return (nbok == nb);
+}
+
+
+void applyOperatorsTest() 
+{
+
+  //small img
+  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<2,int > >, int >  Image;
+  typedef Image::Point Point; 
+  Image img( Point(-1,-1), Point(1,1) ); 
+  for (int i = 0; i < 3; ++i)
+    {
+      img.setValue( Point(i-1,-1), i*i ); 
+      img.setValue( Point(i-1,0), i*i ); 
+      img.setValue( Point(i-1,1), i*i ); 
+    }
+  
+  trace.beginBlock ( "Apply operators" );
+
+  //content of img
+  std::copy(img.begin(), img.end(), std::ostream_iterator<int>(std::cout, ", ") ); 
+  std::cout << std::endl; 
+
+  //img2
+  Image img2( Point(-1,-1), Point(1,1) ); 
+  //operator 
+  typedef DGtal::Divergence<DGtal::Difference2<Image> > Laplacian; 
+  //fill img2 with the laplacian of img
+  Image::Domain d = img.domain(); 
+  std::transform(d.begin(),d.end(), img2.begin(), Laplacian(img) ); 
+
+  //content of img2
+  std::copy(img2.begin(), img2.end(), std::ostream_iterator<int>(std::cout, ", ") ); 
+  std::cout << std::endl; 
+
+  trace.endBlock();
+
 }
 
 int main(int argc, char** argv)
@@ -188,6 +227,7 @@ int main(int argc, char** argv)
     trace.info() << " " << argv[ i ];
   trace.info() << endl;
 
+  applyOperatorsTest(); 
   bool res = first2dTest() 
  ;
   

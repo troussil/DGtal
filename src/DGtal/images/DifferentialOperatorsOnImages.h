@@ -48,22 +48,23 @@
 namespace DGtal
 {
 
+
   /////////////////////////////////////////////////////////////////////////////
-  // template class DifferentialOperatorsOnImages
+  // template class ForwardDifference
   /**
-   * Description of template class 'DifferentialOperatorsOnImages' <p>
-   * \brief Aim: Computes some differential operators on an image. 
+   * Description of template class 'ForwardDifference' <p>
+   * \brief Aim: Computes the forward difference at a point of an image. 
    *
    * @code 
    * @endcode
    *
    * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
    */
   template <typename TImage, typename TOutputValue = typename TImage::Value >
-  class DifferentialOperatorsOnImages
+  class ForwardDifference
   {
 
-    //ASSERT on TImage
     BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
 
     // ----------------------- Types ------------------------------
@@ -80,181 +81,38 @@ namespace DGtal
     typedef typename Image::Dimension Dimension;
     static const typename Image::Dimension dimension = Image::dimension;
    
-    typedef DGtal::PointVector<dimension, OutputValue> Gradient; 
-
     // ----------------------- Standard services ------------------------------
   public:
 
-    /**
-     * Constructor.
-     * @param aStartingImage  any image of signed values
-     */
-    DifferentialOperatorsOnImages( Image& aStartingImage );
 
     /**
      * Constructor.
      *
      * @param aStartingImage  any image of signed values
-     * @param aGridStep any length 
+     * @param aGridStep any length (=1 by default)
      */
-    DifferentialOperatorsOnImages( Image& aStartingImage, const OutputValue& aGridStep );
+    ForwardDifference( Image& aStartingImage, const OutputValue& aGridStep = 1);
 
     /**
      * Destructor. Does nothing.
      */
-    ~DifferentialOperatorsOnImages();
+    ~ForwardDifference() {}
 
     /**
      * Checks the validity/consistency of the object.
      * @return 'true' if the object is valid, 'false' otherwise.
      */
-    bool isValid() const;
+    bool isValid() const {return true;}
 
-    // ----------------------- First order ------------------------------
     /**
-     * Forward difference.
+     * Difference.
      *
      * @param aPoint the point where the derivative is computed
      * @param aDim the axis along which the derivative is computed
      * @return first derivative along axis @a aDim at @ aPoint
      */
-    OutputValue forwardDifference ( const Point& aPoint, const Dimension& aDim ) const; 
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
 
-    /**
-     * Backward difference.
-     *
-     * @param aPoint the point where the derivative is computed
-     * @param aDim the axis along which the derivative is computed
-     * @return first derivative along axis @a aDim at @ aPoint
-     */
-    OutputValue backwardDifference ( const Point& aPoint, const Dimension& aDim ) const; 
-
-    /**
-     * central difference.
-     *
-     * @param aPoint the point where the derivative is computed
-     * @param aDim the axis along which the derivative is computed
-     * @return first derivative along axis @a aDim at @ aPoint
-     */
-    OutputValue centralDifference ( const Point& aPoint, const Dimension& aDim ) const; 
-
-    /**
-     * Gradient
-     *
-     * @param aPoint the point where the gradient is computed
-     * @return the gradient of @a myU at @a aPoint
-     */
-    Gradient centralGradient ( const Point& aPoint ) const; 
-
-    /**
-     * Gradient modulus
-     *
-     * @param aPoint the point where the gradient is computed
-     * @return modulus of the gradient of @a myU at @a aPoint
-     */
-    double centralGradientModulus ( const Point& aPoint ) const; 
-
-    /**
-     * Gradient computed from the upwind scheme
-     *
-     * @param aPoint the point where the gradient is computed
-     * @param aVector displacement vector 
-     * @return the gradient of @a myU at @a aPoint
-     */
-    Gradient upwindGradient ( const Point& aPoint, const Vector& aVector ) const; 
-
-    /**
-     * Modulus of the gradient computed from the upwind scheme
-     *
-     * @param aPoint the point where the gradient is computed
-     * @param aVector displacement vector 
-     * @return modulus of the gradient of @a myU at @a aPoint
-     */
-    double upwindGradientModulus ( const Point& aPoint, const Vector& aVector ) const; 
-
-    /**
-     * Gradient computed from the Godunov scheme
-     *
-     * @param aPoint the point where the gradient is computed
-     * @param isPositive boolean equal to 'true' if the displacement vector
-     * has the same orientation as the normal to the interface
-     * @return the gradient of @a myU at @a aPoint
-     */
-    DGtal::PointVector<TImage::dimension,TOutputValue>
-    godunovGradient ( const Point& aPoint, bool isPositive ) const; 
-
-    /**
-     * Gradient modulus computed from the Godunov scheme
-     *
-     * @param aPoint the point where the gradient is computed
-     * @param isPositive boolean equal to 'true' if the displacement vector
-     * has the same orientation as the normal to the interface
-     * @return modulus of the gradient of @a myU at @a aPoint
-     */
-    double godunovGradientModulus ( const Point& aPoint, bool isPositive ) const; 
-
-    // ----------------------- second order ------------------------------
-    /**
-     * Forward/backward second order difference.
-     *
-     * @param aPoint the point where the derivative is computed
-     * @param aDim the axis along which the derivative is computed
-     * @return second derivative along axis @a aDim at @ aPoint
-     */
-    OutputValue forwardBackwardDifference2 ( const Point& aPoint, const Dimension& aDim ) const; 
-
-    /**
-     * Laplacian.
-     *
-     * @param aPoint the point where the laplacian is computed
-     * @return laplacian of @myU at @ aPoint
-     */
-    OutputValue laplacian ( const Point& aPoint ) const; 
-    
-
-    /**
-     * Weighted forward/backward second order difference.
-     * The weights are the values of @w , divided by 
-     * the gradients modulii.
-     *
-     * @param w image of weights
-     * @param aPoint the point where the derivative is computed
-     * @param aDim the axis along which the derivative is computed
-     * @return second derivative along axis @a aDim at @ aPoint
-     */
-    OutputValue weightedDifference2 ( Image& w, const Point& aPoint, const Dimension& aDim ) const; 
-
-    /**
-     * Normalized forward/backward second order difference 
-     * by the gradients modulii.
-     *
-     * @param aPoint the point where the derivative is computed
-     * @param aDim the axis along which the derivative is computed
-     * @return second derivative along axis @a aDim at @ aPoint
-     */
-    OutputValue normalizedDifference2 ( const Point& aPoint, const Dimension& aDim ) const; 
-
-    /**
-     * Weighted mean curvature
-     *
-     * @param aImg image of weights
-     * @param aPoint the point where the curvature is computed
-     * @return weighted mean curvature of @myU at @ aPoint
-     */
-    OutputValue weightedMeanCurvature ( Image& aImg, const Point& aPoint ) const; 
-
-    /**
-     * Mean curvature
-     *
-     * @param aPoint the point where the curvature is computed
-     * @return mean curvature of @myU at @ aPoint
-     */
-    OutputValue meanCurvature ( const Point& aPoint ) const; 
-
-    
-
-    // ------------------------- Protected Datas ------------------------------
-  protected:
     // ------------------------- Private Datas --------------------------------
   private:
 
@@ -268,53 +126,429 @@ namespace DGtal
      */
     OutputValue myH; 
 
-    // ------------------------- Hidden services ------------------------------
-  protected:
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class BackwardDifference
+  /**
+   * Description of template class 'BackwardDifference' <p>
+   * \brief Aim: Computes the backward difference at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
+  class BackwardDifference
+  {
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+   
+    // ----------------------- Standard services ------------------------------
+  public:
+
 
     /**
      * Constructor.
-     * Forbidden by default (protected to avoid g++ warnings).
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
      */
-    DifferentialOperatorsOnImages();
+    BackwardDifference( Image& aStartingImage, const OutputValue& aGridStep = 1);
 
     /**
-     * Copy constructor.
-     * @param other the object to clone.
-     * Forbidden by default.
+     * Destructor. Does nothing.
      */
-    DifferentialOperatorsOnImages ( const DifferentialOperatorsOnImages & other );
+    ~BackwardDifference() {}
 
     /**
-     * Assignment.
-     * @param other the object to copy.
-     * @return a reference on 'this'.
-     * Forbidden by default.
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
      */
-    DifferentialOperatorsOnImages & operator= ( const DifferentialOperatorsOnImages & other );
+    bool isValid() const {return true;}
 
+    /**
+     * Difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    // ------------------------- Private Datas --------------------------------
   private:
 
+    /**
+     * Reference on an image
+     */
+    Image& myU; 
 
-    // ------------------------- Internals ------------------------------------
+    /**
+     * Grid step
+     */
+    OutputValue myH; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class CentralDifference
+  /**
+   * Description of template class 'CentralDifference' <p>
+   * \brief Aim: Computes the backward difference at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
+  class CentralDifference
+  {
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+   
+    // ----------------------- Standard services ------------------------------
+  public:
+
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    CentralDifference( Image& aStartingImage, const OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~CentralDifference() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    // ------------------------- Private Datas --------------------------------
   private:
 
     /**
-     * Return the point following @a aPoint along axis @a aDim.
-     *
-     * @param aPoint any point
-     * @param aDim the axis along which the @a aPoint is shifted
-     * @return point following @a aPoint along axis @a aDim
+     * Reference on an image
      */
-    Point getNext ( const Point& aPoint, const Dimension& aDim ) const; 
+    Image& myU; 
 
     /**
-     * Return the point preceeding @a aPoint along axis @a aDim.
-     *
-     * @param aPoint any point
-     * @param aDim the axis along which the @a aPoint is shifted
-     * @return point preceeding @a aPoint along axis @a aDim
+     * Grid step
      */
-    Point getPrevious ( const Point& aPoint, const Dimension& aDim ) const; 
+    OutputValue myH; 
+
+  }; 
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class Difference2
+  /**
+   * Description of template class 'Difference2' <p>
+   * \brief Aim: Computes the second difference at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
+  class Difference2
+  {
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+   
+    // ----------------------- Standard services ------------------------------
+  public:
+
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    Difference2( Image& aStartingImage, const OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~Difference2() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Second forward/backward difference.
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Reference on an image
+     */
+    Image& myU; 
+
+    /**
+     * Grid step
+     */
+    OutputValue myH; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class NormalizedDifference2
+  /**
+   * Description of template class 'NormalizedDifference2' <p>
+   * \brief Aim: Computes the second difference at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
+  class NormalizedDifference2
+  {
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+   
+    // ----------------------- Standard services ------------------------------
+  public:
+
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    NormalizedDifference2( Image& aStartingImage, const OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~NormalizedDifference2() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Second forward/backward difference
+     * normalized by the inverse of the gradient modulus
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return first derivative along axis @a aDim at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Reference on an image
+     */
+    Image& myU; 
+
+    /**
+     * Grid step
+     */
+    OutputValue myH; 
+
+    // ------------------------- Internals --------------------------------
+  private:
+
+    /**
+     * Return the harmonic average of the inverse of @a aV1 and @a aV2 
+     *
+     * @param aV1 a first value
+     * @param aV2 a second value
+     * @return the average 
+     */
+    double average ( const Value& aV1, const Value& aN2 ) const; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class WeightedDifference2
+  /**
+   * Description of template class 'WeightedDifference2' <p>
+   * \brief Aim: Computes the second difference at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TImage type of image 
+   * @tparam TOutputValue type of returned value (default TImage::Value)
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value >
+  class WeightedDifference2
+  {
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef TOutputValue OutputValue; 
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+   
+    // ----------------------- Standard services ------------------------------
+  public:
+
+
+    /**
+     * Constructor.
+     *
+     * @param aImage  any image
+     * @param aWImage  any image of weights
+     * @param aGridStep any length (=1 by default)
+     */
+    WeightedDifference2( Image& aImage, Image& aWImage, const OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~WeightedDifference2() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Second forward/backward differences on @a aImage
+     * weighted by @a aWImage and normalized 
+     * by the inverse of the gradient modulus
+     *
+     * @param aPoint the point where the derivative is computed
+     * @param aDim the axis along which the derivative is computed
+     * @return second derivative of @a aImage along axis @a aDim at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Dimension& aDim ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Reference on an image
+     */
+    Image& myImage; 
+    /**
+     * Reference on the weights image
+     */
+    Image& myWImage; 
+
+    /**
+     * Grid step
+     */
+    OutputValue myH; 
+
+    // ------------------------- Internals --------------------------------
+  private:
 
     /**
      * Return the harmonic average of @a aV1 and @a aV2, 
@@ -326,13 +560,427 @@ namespace DGtal
      * @param aN2 any value dividing @a aV2
      * @return the normalized harmonic average of @a aV1 and @a aV2
      */
-    double normalizedAverage ( const Value& aV1, const double& aN1, 
-			       const Value& aV2, const double& aN2 ) const; 
+    double average ( const Value& aV1, const double& aN1, 
+		     const Value& aV2, const double& aN2 ) const; 
+
+  }; 
+
+  ///////////////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class Gradient
+  /**
+   * Description of template class 'Gradient' <p>
+   * \brief Aim: Computes the gradient at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TDifference  type of directionnal differential operator 
+   */
+  template <typename TDifference>
+  class Gradient
+  {
 
 
+    // ----------------------- Types ------------------------------
+  public:
 
-  }; // end of class DifferentialOperatorsOnImages
+    typedef TDifference FiniteDifference;
+    typedef typename FiniteDifference::Dimension Dimension; 
+    static const typename FiniteDifference::Dimension dimension = FiniteDifference::dimension;
+    typedef typename FiniteDifference::Image Image; 
+    typedef typename FiniteDifference::Point Point; 
+   
+    typedef DGtal::PointVector<dimension,typename FiniteDifference::OutputValue> OutputValue;
+ 
+    // ----------------------- Standard services ------------------------------
+  public:
 
+    /**
+     * Constructor.
+     *
+     * @param aD a finite difference operator
+     */
+    Gradient( const FiniteDifference& aD): myD(aD) {}
+
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    Gradient( typename FiniteDifference::Image& aStartingImage, 
+	      const typename FiniteDifference::OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~Gradient() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Gradient
+     *
+     * @param aPoint the point where the gradient is computed
+     * @return gradient of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Finite difference
+     */
+    FiniteDifference myD; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class UpwindGradient
+  /**
+   * Description of template class 'UpwindGradient' <p>
+   * \brief Aim: Computes the gradient at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TDifference  type of directionnal differential operator 
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value>
+  class UpwindGradient
+  {
+
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+
+    typedef DGtal::PointVector<dimension,TOutputValue> OutputValue;
+ 
+    // ----------------------- Standard services ------------------------------
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    UpwindGradient( Image& aStartingImage, 
+	      const TOutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~UpwindGradient() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Gradient
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param aVector displacement vector of the interface
+     * @return gradient of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, const Vector& aVector ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Forward difference
+     */
+    ForwardDifference<Image,TOutputValue> myF; 
+    /**
+     * Backward difference
+     */
+    BackwardDifference<Image,TOutputValue> myB; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class GodunovGradient
+  /**
+   * Description of template class 'GodunovGradient' <p>
+   * \brief Aim: Computes the gradient at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TDifference  type of directionnal differential operator 
+   */
+  template <typename TImage, typename TOutputValue = typename TImage::Value>
+  class GodunovGradient
+  {
+
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TImage Image;
+    typedef typename Image::Value Value;
+ 
+    typedef typename Image::Point Point;
+    typedef typename Image::Vector Vector;  
+    typedef typename Image::Domain Domain;
+
+    typedef typename Image::Dimension Dimension;
+    static const typename Image::Dimension dimension = Image::dimension;
+
+    typedef DGtal::PointVector<dimension,TOutputValue> OutputValue;
+ 
+    // ----------------------- Standard services ------------------------------
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image
+     * @param isPositive flag equal to 'true' if the 
+     * interface moves in the direction of the normal
+     * and 'false' if it moves in the opposite direction 
+     * (='true' by default)
+     * @param aGridStep any length (=1 by default)
+     */
+    GodunovGradient( Image& aStartingImage, bool isPositive = true, 
+	      const TOutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~GodunovGradient() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Gradient
+     *
+     * @param aPoint the point where the gradient is computed
+     * @return gradient of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint ) const; 
+
+    /**
+     * Gradient
+     *
+     * @param aPoint the point where the gradient is computed
+     * @param isPositive flag equal to 'true' if the 
+     * interface moves in the direction of the normal
+     * and 'false' if it moves in the opposite direction 
+     * (='true' by default)
+     * @return gradient of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint, bool isPositive ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Forward difference
+     */
+    ForwardDifference<Image,TOutputValue> myF; 
+    /**
+     * Backward difference
+     */
+    BackwardDifference<Image,TOutputValue> myB; 
+    /**
+     * Flag
+     */
+    bool myIsPositive; 
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class Divergence
+  /**
+   * Description of template class 'Divergence' <p>
+   * \brief Aim: Computes the divergence at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TDifference  type of directionnal differential operator 
+   */
+  template <typename TDifference>
+  class Divergence
+  {
+
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TDifference FiniteDifference;
+    typedef typename FiniteDifference::Dimension Dimension; 
+    static const typename FiniteDifference::Dimension dimension = FiniteDifference::dimension;
+    typedef typename FiniteDifference::Image Image; 
+    typedef typename FiniteDifference::Point Point; 
+    typedef typename FiniteDifference::OutputValue OutputValue;
+ 
+    // ----------------------- Standard services ------------------------------
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param aD a finite difference operator
+     */
+    Divergence( const FiniteDifference& aD ): myD(aD) {}
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    Divergence( typename FiniteDifference::Image& aStartingImage, 
+	      const typename FiniteDifference::OutputValue& aGridStep = 1);
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~Divergence() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Divergence
+     *
+     * @param aPoint the point where the divergence is computed
+     * @return gradient of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Finite difference
+     */
+    FiniteDifference myD; 
+
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class GradientModulus
+  /**
+   * Description of template class 'GradientModulus' <p>
+   * \brief Aim: Computes the gradient modulus at a point
+   * of an image. 
+   *
+   * @code 
+   * @endcode
+   *
+   * @tparam TGradient type of gradient 
+   */
+  template <typename TGradient>
+  class GradientModulus
+  {
+
+
+    // ----------------------- Types ------------------------------
+  public:
+
+    typedef TGradient Gradient;
+    typedef typename Gradient::Dimension Dimension; 
+    static const typename Gradient::Dimension dimension = Gradient::dimension;
+    typedef typename Gradient::Point Point; 
+   
+    typedef double OutputValue;
+ 
+    // ----------------------- Standard services ------------------------------
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param aG any gradient operator
+     */
+    GradientModulus( const Gradient& aG) : myG(aG) {}
+
+    /**
+     * Constructor.
+     *
+     * @param aStartingImage  any image of signed values
+     * @param aGridStep any length (=1 by default)
+     */
+    GradientModulus( typename Gradient::Image& aStartingImage, 
+		     const typename Gradient::OutputValue::Component& aGridStep = 1);
+
+
+    /**
+     * Destructor. Does nothing.
+     */
+    ~GradientModulus() {}
+
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const {return true;}
+
+    /**
+     * Gradient modulus
+     *
+     * @param aPoint the point where the gradient modulus is computed
+     * @return gradient modulus of @a myU at @ aPoint
+     */
+    OutputValue operator() ( const Point& aPoint ) const; 
+
+    // ------------------------- Private Datas --------------------------------
+  private:
+
+    /**
+     * Gradient
+     */
+    Gradient myG; 
+
+  }; 
+
+
+  ///////////////////////////////////////////////////////////////////
 
 
 
