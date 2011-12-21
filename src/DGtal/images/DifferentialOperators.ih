@@ -15,13 +15,13 @@
  **/
 
 /**
- * @file DifferentialOperatorsOnImages.ih
+ * @file DifferentialOperators.ih
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
  * @date 2011/12/19
  *
- * @brief Implementation of inline methods defined in DifferentialOperatorsOnImages.h
+ * @brief Implementation of inline methods defined in DifferentialOperators.h
  *
  * This file is part of the DGtal library.
  */

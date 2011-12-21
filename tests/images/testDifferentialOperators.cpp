@@ -36,7 +36,7 @@
 #include "DGtal/kernel/domains/HyperRectDomain.h"
 
 #include "DGtal/images/ImageContainerBySTLVector.h"
-#include "DGtal/images/DifferentialOperatorsOnImages.h"
+#include "DGtal/images/DifferentialOperators.h"
 
 
 bool first2dTest() 

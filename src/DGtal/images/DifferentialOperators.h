@@ -17,26 +17,26 @@
 #pragma once
 
 /**
- * @file DifferentialOperatorsOnImages.h
+ * @file DifferentialOperators.h
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
  * @date 201/12/19
  *
- * Header file for module DifferentialOperatorsOnImages.cpp
+ * Header file for module DifferentialOperators.cpp
  *
  * This file is part of the DGtal library.
  */
 
-#if defined(DifferentialOperatorsOnImages_RECURSES)
-#error Recursive header files inclusion detected in DifferentialOperatorsOnImages.h
-#else // defined(DifferentialOperatorsOnImages_RECURSES)
+#if defined(DifferentialOperators_RECURSES)
+#error Recursive header files inclusion detected in DifferentialOperators.h
+#else // defined(DifferentialOperators_RECURSES)
 /** Prevents recursive inclusion of headers. */
-#define DifferentialOperatorsOnImages_RECURSES
+#define DifferentialOperators_RECURSES
 
-#if !defined DifferentialOperatorsOnImages_h
+#if !defined DifferentialOperators_h
 /** Prevents repeated inclusion of headers. */
-#define DifferentialOperatorsOnImages_h
+#define DifferentialOperators_h
 
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
@@ -989,12 +989,12 @@ namespace DGtal
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
-#include "DifferentialOperatorsOnImages.ih"
+#include "DifferentialOperators.ih"
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-#endif // !defined DifferentialOperatorsOnImages_h
+#endif // !defined DifferentialOperators_h
 
-#undef DifferentialOperatorsOnImages_RECURSES
-#endif // else defined(DifferentialOperatorsOnImages_RECURSES)
+#undef DifferentialOperators_RECURSES
+#endif // else defined(DifferentialOperators_RECURSES)
