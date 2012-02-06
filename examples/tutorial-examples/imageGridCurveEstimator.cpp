@@ -51,14 +51,14 @@
 //! [imageGridCurveEstimator-trackingIncludes]
 
 //! [imageGridCurveEstimator-estimatorIncludes]
-#include "DGtal/geometry/2d/estimators/DSSLengthEstimator.h"
+#include "DGtal/geometry/curves/estimation/DSSLengthEstimator.h"
 //! [imageGridCurveEstimator-estimatorIncludes]
 
 //display
 #include "DGtal/io/boards/Board2D.h"
 
 //segmentation
-#include "DGtal/geometry/2d/GreedySegmentation.h"
+#include "DGtal/geometry/curves/representation/GreedySegmentation.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -67,7 +67,7 @@ int main()
   //image import
   typedef DGtal::ImageContainerBySTLVector< Z2i::Domain, int> Image;
   std::string filename =  examplesPath + "samples/contourS.pgm";
-  Image image = DGtal::PNMReader<Image>::importPGMImage(filename); 
+  Image image = DGtal::PNMReader<Image>::importPGM(filename); 
 
   //! [imageGridCurveEstimator-predicate] 
   //predicate from the image
