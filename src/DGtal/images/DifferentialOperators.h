@@ -41,7 +41,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
 #include <iostream>
-#include "DGtal/images/CImageContainer.h"
+#include "DGtal/images/CConstImage.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +65,7 @@ namespace DGtal
   class ForwardDifference
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -145,7 +145,7 @@ namespace DGtal
   class BackwardDifference
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -225,7 +225,7 @@ namespace DGtal
   class CentralDifference
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -306,7 +306,7 @@ namespace DGtal
   class Difference2
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -386,7 +386,7 @@ namespace DGtal
   class NormalizedDifference2
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -479,7 +479,7 @@ namespace DGtal
   class WeightedDifference2
   {
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -664,7 +664,7 @@ namespace DGtal
     // ----------------------- Types ------------------------------
   public:
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:
@@ -747,7 +747,7 @@ namespace DGtal
     // ----------------------- Types ------------------------------
   public:
 
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CConstImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:

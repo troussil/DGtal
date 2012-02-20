@@ -17,57 +17,59 @@
 #pragma once
 
 /**
- * @file CConstRange.h
- * @author Guillaume Damiand
+ * @file CUnaryFunctor.h
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ * @date 2012/02/07
  *
- * @date 2011/08/31
- *
- * Header file for concept CConstRange
+ * Header file for concept CUnaryFunctor.cpp
  *
  * This file is part of the DGtal library.
  */
 
-#if defined(CConstRange_RECURSES)
-#error Recursive header files inclusion detected in CConstRange.h
-#else // defined(CConstRange_RECURSES)
+#if defined(CUnaryFunctor_RECURSES)
+#error Recursive header files inclusion detected in CUnaryFunctor.h
+#else // defined(CUnaryFunctor_RECURSES)
 /** Prevents recursive inclusion of headers. */
-#define CConstRange_RECURSES
+#define CUnaryFunctor_RECURSES
 
-#if !defined CConstRange_h
+#if !defined CUnaryFunctor_h
 /** Prevents repeated inclusion of headers. */
-#define CConstRange_h
+#define CUnaryFunctor_h
 
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
 #include <iostream>
-#include "DGtal/base/CSinglePassConstRange.h"
+#include "DGtal/base/Common.h"
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
 {
 
   /////////////////////////////////////////////////////////////////////////////
-  // class CConstRange
+  // class CUnaryFunctor
   /**
-     Description of \b concept '\b CConstRange' <p>
+     Description of \b concept '\b CUnaryFunctor' <p>
      @ingroup Concepts
+     \brief Aim: Defines a unary functor, which
+     associates arguments to results
     
-     \brief Aim: Defines the concept describing a const range.
-     
-     <p> Refinement of CSinglePassConstRange
+     <p> Refinement of Assignable
     
-     <p> Provided types :
-
-<<<<<<< HEAD
-     - ConstIterator: the const iterator type, a model of const iterator
-          concept.
-=======
->>>>>>> gdamiand/ranges
-     - ConstReverseIterator: the const reverse iterator type, a model of
-          const iterator concept.
-
-     <table>
+     <p> Associated types :
+        
+     <p> Notation
+     - \t X : a type that is a model of CUnaryFunctor
+     - \t x : Object of type \t X
+     - \t A : argument type
+     - \t a : Object of type \t A
+     - \t R : result type
+     - \t r : Object of type \t R
+    
+     <p> Definitions
+    
+     <p> Valid expressions and semantics <br>
+     <table> 
      <tr> 
      <td class=CName> \b Name </td> 
      <td class=CExpression> \b Expression </td>
@@ -79,22 +81,12 @@ namespace DGtal
      <td class=CComplexity> \b Complexity </td>
      </tr>
      <tr> 
-     <td class=CName>            \t rbegin </td>
-     <td class=CExpression>      \t x.rbegin() const</td> 
+     <td class=CName>            Apply function </td>
+     <td class=CExpression>      \t r = x( \t a ) </td> 
      <td class=CRequirements>    </td>
-     <td class=CReturnType>      ConstReverseIterator</td>
+     <td class=CReturnType>      \c R </td>
      <td class=CPrecondition>    </td> 
-     <td class=CSemantics>       </td> 
-     <td class=CPostCondition>   </td> 
-     <td class=CComplexity>      </td>
-     </tr>
-     <tr> 
-     <td class=CName>            \t rend </td>
-     <td class=CExpression>      \t x.rend() const</td> 
-     <td class=CRequirements>    </td>
-     <td class=CReturnType>      ConstReverseIterator</td>
-     <td class=CPrecondition>    </td> 
-     <td class=CSemantics>       </td> 
+     <td class=CSemantics>       return the value of the function \t x on argument \t a</td> 
      <td class=CPostCondition>   </td> 
      <td class=CComplexity>      </td>
      </tr>
@@ -103,39 +95,36 @@ namespace DGtal
      <p> Invariants <br>
     
      <p> Models <br>
-    
+        
      <p> Notes <br>
-
-     @tparam T the type that is checked. T should be a model of CConstRange.
-
-   */
-  template <typename T>
-  struct CConstRange: CSinglePassConstRange<T>
+  */
+  template <typename X, typename A, typename R>
+  struct CUnaryFunctor : boost::Assignable<X>
   {
     // ----------------------- Concept checks ------------------------------
   public:
-    typedef typename T::ConstReverseIterator ConstReverseIterator;
 
-    BOOST_CONCEPT_ASSERT(( boost_concepts::SinglePassIteratorConcept<ConstReverseIterator> ));
-
-    BOOST_CONCEPT_USAGE(CConstRange)
+    BOOST_CONCEPT_USAGE( CUnaryFunctor )
     {
-      ConstReverseIterator it=i.rbegin();
-      it=i.rend();
-    };
-
+      // x( p ) returns myV.
+      ConceptUtils::sameType( r, x.operator() ( a ) );
+    }
+    // ------------------------- Private Datas --------------------------------
   private:
-    T i;
-  }; // end of concept CConstRange
+    X x; 
+    A a; 
+    R r; 
+    // ------------------------- Internals ------------------------------------
+  private:
+    
+  }; // end of concept CUnaryFunctor
   
 } // namespace DGtal
-
-
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-#endif // !defined CConstRange_h
+#endif // !defined CUnaryFunctor_h
 
-#undef CConstRange_RECURSES
-#endif // else defined(CConstRange_RECURSES)
+#undef CUnaryFunctor_RECURSES
+#endif // else defined(CUnaryFunctor_RECURSES)

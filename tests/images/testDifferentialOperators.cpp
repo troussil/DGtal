@@ -43,10 +43,11 @@ bool first2dTest()
 {
 
   //small img
-  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<2,int > >, int >  Image;
+  typedef HyperRectDomain<SpaceND<2,int > > Domain; 
+  typedef DGtal::ImageContainerBySTLVector<Domain, int >  Image;
   typedef Image::Point Point; 
   typedef Image::Vector Vector; 
-  Image img( Point(-1,-1), Point(1,1) ); 
+  Image img( Domain( Point(-1,-1), Point(1,1) ) ); 
 
   for (int i = 0; i < 3; ++i)
     {
@@ -147,7 +148,7 @@ bool first2dTest()
 
   {
     //weights
-    Image w( Point(-1,-1), Point(1,1) ); 
+    Image w( Domain( Point(-1,-1), Point(1,1) ) ); 
 
     for (int i = 0; i < 3; ++i)
       {
@@ -186,9 +187,10 @@ void applyOperatorsTest()
 {
 
   //small img
-  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<2,int > >, int >  Image;
+  typedef HyperRectDomain<SpaceND<2,int > > Domain; 
+  typedef DGtal::ImageContainerBySTLVector<Domain, int >  Image;
   typedef Image::Point Point; 
-  Image img( Point(-1,-1), Point(1,1) ); 
+  Image img( Domain( Point(-1,-1), Point(1,1) ) ); 
   for (int i = 0; i < 3; ++i)
     {
       img.setValue( Point(i-1,-1), i*i ); 
@@ -203,7 +205,7 @@ void applyOperatorsTest()
   std::cout << std::endl; 
 
   //img2
-  Image img2( Point(-1,-1), Point(1,1) ); 
+  Image img2( Domain( Point(-1,-1), Point(1,1) ) ); 
   //operator 
   typedef DGtal::Divergence<DGtal::Difference2<Image> > Laplacian; 
   //fill img2 with the laplacian of img
