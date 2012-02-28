@@ -7,6 +7,7 @@ SET(DGTAL_TESTS_SRC
    testObjectBorder
    testSimpleExpander
    testSCellsFunctor
+   testMLSimple
    )
 
 FOREACH(FILE ${DGTAL_TESTS_SRC})
