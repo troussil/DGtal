@@ -33,32 +33,19 @@
 
 
 
-///////////////// small helper
-template<DGtal::Dimension dimension, typename TCoordinate>
-typename DGtal::PointVector<dimension, TCoordinate> 
-makePoint(const TCoordinate& aValue) 
-{
-  typedef typename DGtal::PointVector<dimension, TCoordinate> Point; 
-  Point p; 
-  for (typename Point::Iterator i = p.begin(); i != p.end(); ++i)
-  {
-    *i = aValue; 
-  }
-  return p;
-} 
-
-
 ///////////////// main functions
 template<DGtal::Dimension dimension, typename TIterator>
 bool basicTest(const TIterator& itb, const TIterator& ite, const typename std::iterator_traits<TIterator>::value_type& aLabel, bool flag)
 {
-  typedef typename std::iterator_traits<TIterator>::value_type Label; 
-  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<dimension,int > >, Label >  Image;
-  Image img( makePoint<dimension,int>(-1), makePoint<dimension,int>(1) ); 
+  typedef typename std::iterator_traits<TIterator>::value_type Label;
+  typedef HyperRectDomain<SpaceND<dimension,int > > Domain;  
+  typedef typename Domain::Point Point; 
+  typedef DGtal::ImageContainerBySTLVector<Domain, Label >  Image;
+  Image img( Domain( Point::diagonal(-1), Point::diagonal(1) ) ); 
   DGtal::SimplePointHelper<Image>::readConfiguration(img, itb, ite); 
   DGtal::SimplePointHelper<Image> h( img); 
 
-  return ( h.isMLSimple(makePoint<dimension,int>(0), aLabel) == flag ); 
+  return ( h.isMLSimple( Point::diagonal(0), aLabel) == flag ); 
 }
 
 
@@ -69,12 +56,15 @@ bool firstTest()
   std::string s = "aaaaabbbb";
 
   typedef std::iterator_traits<std::string::iterator>::value_type Label; 
-  typedef DGtal::ImageContainerBySTLVector<HyperRectDomain<SpaceND<2,int > >, Label >  Image;
-  Image img( makePoint<2,int>(-1), makePoint<2,int>(1) ); 
+  typedef HyperRectDomain<SpaceND<2,int > > Domain;  
+  typedef Domain::Point Point; 
+  typedef DGtal::ImageContainerBySTLVector<Domain, Label >  Image;
+  Image img( Domain( Point::diagonal(-1), Point::diagonal(1) ) ); 
+
   DGtal::SimplePointHelper<Image>::readConfiguration(img, s.begin(), s.end()); 
   DGtal::SimplePointHelper<Image> h(img); 
 
-  bool res = ( ( h.isValid() ) && ( h.isMLSimple( makePoint<2,int>(0),'b' ) == true ) );
+  bool res = ( ( h.isValid() ) && ( h.isMLSimple( Point::diagonal(0),'b' ) == true ) );
   trace.info() << ((res)? "Passed": "Failed") << std::endl; 
   trace.endBlock();
   return (res == true);
@@ -319,8 +309,10 @@ bool randomTest(int size)
 
   //image
   typedef DGtal::HyperRectDomain<DGtal::SpaceND<dimension,int > > Domain; 
+  typedef typename Domain::Point Point; 
   typedef DGtal::ImageContainerBySTLVector<Domain, Label >  Image;
-  Image img( makePoint<dimension,int>(-size), makePoint<dimension,int>(size) ); 
+  Image img( Domain( Point::diagonal(-size), Point::diagonal(size) ) );
+ 
   bool flagIsValid = DGtal::SimplePointHelper<Image>::generateRandomConfiguration(img, labels, 0.5); 
   
   //helper

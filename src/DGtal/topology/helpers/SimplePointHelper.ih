@@ -88,7 +88,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& a
       else 
 	{ //if inside or adjacent to the infinite region
 	  //build a local image
-	  LabelsImage localImage( localDomain.lowerBound(), localDomain.upperBound() ); 
+	  LabelsImage localImage( localDomain ); 
 	  typename Domain::ConstIterator it = localDomain.begin(); 
 	  typename Domain::ConstIterator itEnd = localDomain.end(); 
 	  for ( ; it != itEnd; ++it )
@@ -190,8 +190,8 @@ DGtal::SimplePointHelper<TImage>::isSimple12(const Point& aPoint,
 
   //binary images  
   Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d.lowerBound(), d.upperBound() ); 
-  BinaryImage background( d.lowerBound(), d.upperBound() ); 
+  BinaryImage foreground( d ); 
+  BinaryImage background( d ); 
   unsigned int fNb = 0; //number of foreground points
   Point fPt( aPoint ); //one foreground point
   unsigned int bNb = 0; //number of background points
@@ -278,8 +278,8 @@ DGtal::SimplePointHelper<TImage>::isSimple12WithoutFolds(const Point& aPoint,
 
   //binary images  
   Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d.lowerBound(), d.upperBound() ); 
-  BinaryImage background( d.lowerBound(), d.upperBound() ); 
+  BinaryImage foreground( d ); 
+  BinaryImage background( d ); 
   unsigned int fNb = 0; //number of foreground points
   Point fPt( aPoint ); //one foreground point
   unsigned int bNb = 0; //number of background points
@@ -369,8 +369,8 @@ DGtal::SimplePointHelper<TImage>::isSimple13(const Point& aPoint,
 
   //binary images  
   Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d.lowerBound(), d.upperBound() ); 
-  BinaryImage background( d.lowerBound(), d.upperBound() ); 
+  BinaryImage foreground( d ); 
+  BinaryImage background( d ); 
   unsigned int fNb = 0; //number of foreground points
   Point fPt( aPoint ); //one foreground point
   unsigned int bNb = 0; //number of background points
@@ -476,8 +476,8 @@ DGtal::SimplePointHelper<TImage>::isSimple13WithoutFolds(const Point& aPoint,
 
   //binary images  
   Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d.lowerBound(), d.upperBound() ); 
-  BinaryImage background( d.lowerBound(), d.upperBound() ); 
+  BinaryImage foreground( d ); 
+  BinaryImage background( d ); 
   unsigned int fNb = 0; //number of foreground points
   Point fPt( aPoint ); //one foreground point
   unsigned int bNb = 0; //number of background points
@@ -676,7 +676,7 @@ DGtal::SimplePointHelper<TImage>::isLabeled() const
     {
       Label l = *rl; 
       //a) build a binary image
-      BinaryImage binImg( myImg.domain().lowerBound(), myImg.domain().upperBound() ); 
+      BinaryImage binImg( myImg.domain() ); 
       unsigned int nb = 0; //number of points
       Point pt( myImg.domain().lowerBound() ); //one starting point
 
@@ -752,7 +752,7 @@ generateRandomConfiguration ( LabelsImage& aImg, const std::set<Label>& labels,
   //create bImg with false
   Point lowerBound = aImg.domain().lowerBound(); 
   Point upperBound = aImg.domain().upperBound(); 
-  BinaryImage bImg( lowerBound, upperBound ); 
+  BinaryImage bImg( aImg.domain() ); 
   {
     Domain d = bImg.domain();
     typename Domain::ConstIterator dit = d.begin(); 
@@ -869,7 +869,7 @@ generateRandomConfiguration ( LabelsImage& aImg, const std::set<Label>& labels,
   bool flag = true; 
   {
     //a) build a binary image
-    BinaryImage binImg( aImg.domain().lowerBound(), aImg.domain().upperBound() ); 
+    BinaryImage binImg( aImg.domain() ); 
     unsigned int nb = 0; //number of points
     Point pt( aImg.domain().lowerBound() ); //one starting point
 
