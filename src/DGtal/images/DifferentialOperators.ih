@@ -208,7 +208,7 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 		 *(myU(aPoint) - myU(previous)) ) 
 	     / NumberTraits<Value>::castToDouble(myH*myH) );
     } 
-   else if ( (!nextInside) && previousInside )
+   else if ( (!previousInside) && nextInside )
      {
        double nMod = m(next); 
        return ( ( ( average(nMod,mod) - 1 )
@@ -278,7 +278,7 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 		 *(myImage(aPoint) - myImage(previous)) ) 
 	     / NumberTraits<Value>::castToDouble(myH*myH) );
     } 
-   else if ( (!nextInside) && previousInside )
+   else if ( (!previousInside) && nextInside )
      {
        double nMod = m(next); 
        return ( ( ( average(myWImage(next),nMod,myWImage(aPoint),mod) 
