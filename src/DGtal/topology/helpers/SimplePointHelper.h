@@ -164,6 +164,19 @@ namespace DGtal
     bool isMLSimple(const Point& aPoint, const Label& aLabel) const;
 
     /**
+     * Checks if @a aPoint is ML-simple with respect 
+     * to the region having label @a aLabel.
+     *
+     * @param aPoint any point
+     * @param aLabel  any label
+     * @return 'true' if ML-simple, 'false' otherwise.
+     *
+     * @see isMLSimple
+     */
+    bool operator()(const Point& aPoint, const Label& aLabel) const;
+
+
+    /**
      * Checks if @a aPoint is simple with respect 
      * to the region @a aPoint belongs to.
      *
