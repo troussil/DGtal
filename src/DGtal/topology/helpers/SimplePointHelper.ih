@@ -66,6 +66,14 @@ DGtal::SimplePointHelper<TImage>::isSimple(const Point& aPoint) const
 template <typename TImage>
 inline
 bool
+DGtal::SimplePointHelper<TImage>::operator()(const Point& aPoint, const Label& aLabel) const
+{
+  return isMLSimple(aPoint,aLabel); 
+}
+
+template <typename TImage>
+inline
+bool
 DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& aLabel) const
 {
   
@@ -111,7 +119,6 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 					     const Point& aPoint, const Label& aLabel) const
 {
 
-  bool flag = true; 
   Label centerLabel = aImg(aPoint); 
     
   //extract distinct regions that are (dim-1)-adjacent to aPoint
@@ -136,6 +143,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
     {
       if ( sExtraRegions.size() == 0 )
 	{
+	  {
 	  //predicate from the label of the first main region
 	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
 	    pred0( aImg, *sMainRegions.begin() ); 
@@ -144,9 +152,11 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
 	    pred1( aImg, *(++sMainRegions.begin()) ); 
 	  if (!isSimple12WithoutFolds( aPoint, pred1 ) ) return false;
+	  }
 	}
       else if ( sExtraRegions.size() <= 1)
 	{
+	  {
 	  //predicate from the label of the first main region
 	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
 	    pred0( aImg, *sMainRegions.begin() ); 
@@ -155,6 +165,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
 	    pred1( aImg, *(++sMainRegions.begin()) ); 
 	  if (!isSimple13WithoutFolds( aPoint, pred1 ) ) return false;
+	  }
 
 	  //extra regions
 	  typename std::set<Label>::iterator it = sExtraRegions.begin(); 
@@ -874,12 +885,12 @@ generateRandomConfiguration ( LabelsImage& aImg, const std::set<Label>& labels,
     Point pt( aImg.domain().lowerBound() ); //one starting point
 
     Domain d = aImg.domain(); 
-    typename Domain::ConstIterator it = d.begin(); 
-    typename Domain::ConstIterator itEnd = d.end(); 
-    for ( ; it != itEnd; ++it)
+    typename Domain::ConstIterator dit = d.begin(); 
+    typename Domain::ConstIterator ditEnd = d.end(); 
+    for ( ; dit != ditEnd; ++dit)
       { //for each domain point
 
-	Point p(*it); 
+	Point p(*dit); 
 	//true if p has label lastLabel
 	if (aImg( p ) == lastLabel)
 	  {
