@@ -38,6 +38,11 @@
 // IMPLEMENTATION of inline methods.
 ///////////////////////////////////////////////////////////////////////////////
 
+namespace details
+{
+  bool absComparator(double i, double j) { return ( std::abs(i) < std::abs(j) ); }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
 template <typename TImage>
@@ -92,12 +97,6 @@ DGtal::L2FirstOrderLocalDistance<TImage>::operator()
 	      if (flag2) d = d2; 
 	    }
 
-	  //sign test
-	  nb++; 
-	  if ( d >= 0 )
-	    nbPos++;
-	  else
-	    d = (-d);
 	  v.push_back(d); 
 	}
 
@@ -106,19 +105,7 @@ DGtal::L2FirstOrderLocalDistance<TImage>::operator()
     } //end for each dimension
 
   //computation of the new value
-  if (nbPos == nb) 
     return this->compute(v); 
-  else if (nbPos == 0)
-    return -this->compute(v);
-  else 
-    { //there should not be neighbors having values
-      //of different signs in aMap
-      trace.error() << "Metric values of different sign " 
-		    << "in DGtal::L2FirstOrderLocalDistance<TImage>"
-		    << std::endl;  
-      throw InputException();
-    } 
-
 }
 
 
@@ -131,19 +118,17 @@ DGtal::L2FirstOrderLocalDistance<TImage>::compute
 {
 
   unsigned int c = aValueList.size();
-  ASSERT( c > 0 ); 
   if ( c == 1 )
     {
       Value d = aValueList.back();
-      Value dres = d + 1;
-      ASSERT(dres > 0); 
-      return dres; 
+      if (d >= 0) return d + 1.0; 
+      else return d - 1.0; 
     } 
   else 
     {
       //function computation
       typename Values::iterator it = 
-	std::max_element( aValueList.begin(), aValueList.end() ); 
+	std::max_element( aValueList.begin(), aValueList.end(), details::absComparator ); 
       if ( gradientNorm( *it, aValueList ) > 1 )
 	{
 	  aValueList.erase( it ); 
@@ -170,9 +155,10 @@ DGtal::L2FirstOrderLocalDistance<TImage>::compute
 	  double disc = b*b - 4*a*c;
 	  ASSERT(disc >= 0); 
 	  //greatest solution
-	  double dres = ( ( -b + std::sqrt(disc) ) / (2*a) );
-	  ASSERT(dres > 0); 
-	  return static_cast<Value>(dres); 
+	  double dres1 = ( ( -b + std::sqrt(disc) ) / (2*a) );
+	  double dres2 = ( ( -b - std::sqrt(disc) ) / (2*a) );
+    if ( std::abs(dres1) > std::abs(dres2) ) return static_cast<Value>(dres1); 
+    else return static_cast<Value>(dres2); 
 	}
     }
 }
