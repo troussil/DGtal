@@ -3,6 +3,7 @@ SET(DGTAL_TESTS_SRC
   testHalfPlane
   testImplicitFunctionModels
   testShapesFromPoints
+  testCircleFromPoints
   )
 
 FOREACH(FILE ${DGTAL_TESTS_SRC})
