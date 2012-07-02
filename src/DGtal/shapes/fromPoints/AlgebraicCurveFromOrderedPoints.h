@@ -17,27 +17,27 @@
 #pragma once
 
 /**
- * @file CircleFromPoints.h
- * @brief Representation of a CircleFromPoints uniquely defined by two 2D points.
+ * @file AlgebraicCurveFromOrderedPoints.h
+ * @brief Representation of a AlgebraicCurveFromOrderedPoints uniquely defined by two 2D points.
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
  * @date 2011/09/22
  *
- * @brief Header file for module CircleFromPoints.cpp
+ * @brief Header file for module AlgebraicCurveFromOrderedPoints.cpp
  *
  * This file is part of the DGtal library.
  */
 
-#if defined(CircleFromPoints_RECURSES)
-#error Recursive header files inclusion detected in CircleFromPoints.h
-#else // defined(CircleFromPoints_RECURSES)
+#if defined(AlgebraicCurveFromOrderedPoints_RECURSES)
+#error Recursive header files inclusion detected in AlgebraicCurveFromOrderedPoints.h
+#else // defined(AlgebraicCurveFromOrderedPoints_RECURSES)
 /** Prevents recursive inclusion of headers. */
-#define CircleFromPoints_RECURSES
+#define AlgebraicCurveFromOrderedPoints_RECURSES
 
-#if !defined CircleFromPoints_h
+#if !defined AlgebraicCurveFromOrderedPoints_h
 /** Prevents repeated inclusion of headers. */
-#define CircleFromPoints_h
+#define AlgebraicCurveFromOrderedPoints_h
 
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
@@ -54,35 +54,61 @@ namespace DGtal
 
   namespace details
   {
+    struct AlgebraicDistanceToCircle 
+    {
+    public: 
+      static const DGtal::Dimension N = 3; 
 
+    public: 
+      template<typename Point>
+      typename Point::Coordinate //to promote
+      operator() (const boost::array<Point, N>& a, const Point& aP) const 
+      {
+ 	typedef DGtal::PointVector<2,typename Point::Coordinate> Vector; 
+
+	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
+		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
+	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
+		  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
+	return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
+
+      }
+    }; 
   /////////////////////////////////////////////////////////////////////////////
-  // template class CircleFromPointsBase
+  // template class AlgebraicCurveFromOrderedPointsBase
   /**
-   * \brief Aim: Represents a circle 
+   * \brief Aim: Represents an algebraic curve, which 
+   * is contrained to pass through @e F given points.
    *
+   * @tparam F number of free points (between 0 and N, 
+   * the maximal number of points that uniquely define
+   * a given curve)
+   *
+   * @tparam TDistance type of functor, which computes 
+   * the algebraic distance to the curve
    */
-  template <DGtal::Dimension F, typename TInteger = int>
-  struct CircleFromPointsBase
+    template <DGtal::Dimension F, typename TInteger = int, typename TDistance = AlgebraicDistanceToCircle>
+  struct AlgebraicCurveFromOrderedPointsBase
   {
 
     BOOST_STATIC_ASSERT((F >= 0 ));
-    BOOST_STATIC_ASSERT((F <= 3 ));
+    BOOST_STATIC_ASSERT((F <= TDistance::N ));
 
 	//total number of points
 	//(defining uniquely a circle)
-    static const DGtal::Dimension N = 3; 
- 	//number of variable points 
-    static const DGtal::Dimension V = N-F; 
+    static const DGtal::Dimension N = TDistance::N; 
+ 	//number of given points 
+    static const DGtal::Dimension G = N-F; 
 
     // ----------------------- associated types ------------------------------
     typedef TInteger Coordinate;
     typedef DGtal::PointVector<2,Coordinate> Point; 
     typedef DGtal::PointVector<3,Coordinate> HPoint; //in homogeneous coordinates 
 
-    typedef Coordinate Value; //TODO: to promote
+    typedef Coordinate Value;//to promote or to adapt (-1, 0, 1) ?
 
-    typedef boost::array<HPoint,F> FArray;  //array of fixed points
-    typedef boost::array<HPoint,V> VArray;  //array of variable points
+    typedef boost::array<HPoint,G> GArray;  //array of fixed points
+    typedef boost::array<HPoint,F> FArray;  //array of variable points
     typedef boost::array<HPoint,N> Array;  //array of all points
 
     // ------------------------- Private Datas --------------------------------
@@ -95,11 +121,15 @@ namespace DGtal
     /**
        Array of fixed points
     */
-    FArray myFArray;
+    GArray myGArray;
     /**
        Array of variable points
     */
-    VArray myVArray;
+    FArray myFArray;
+    /**
+     * Distance functor
+    */
+    TDistance myDistance;
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -108,13 +138,13 @@ namespace DGtal
     /**
      * Constructor when no points are fixed.
      */
-    CircleFromPointsBase() { BOOST_STATIC_ASSERT(( F == 0 )); };
+    AlgebraicCurveFromOrderedPointsBase() { BOOST_STATIC_ASSERT(( G == 0 )); };
 
     /**
      * Constructor.
-     * @param aFArray an array of fixed points
+     * @param aGArray an array of given points
      */
-    CircleFromPointsBase(const FArray& aFArray): myFArray( aFArray ) {};
+    AlgebraicCurveFromOrderedPointsBase(const GArray& aGArray): myGArray( aGArray ), myDistance() {};
 
 
     /**
@@ -125,35 +155,37 @@ namespace DGtal
     template <typename I>
     void init(const I& itb, const I& ite) 
       { 
-	typename VArray::iterator ait = myVArray.begin(); 
-	for (I it = itb; ( (it != ite)&&(ait != myVArray.end()) ); ++it, ++ait)
+	typename FArray::iterator ait = myFArray.begin(); 
+	for (I it = itb; ( (it != ite)&&(ait != myFArray.end()) ); ++it, ++ait)
             *ait = toHPoint( *it );  
       };
 
     /**
      * Init.
-     * @param aVArray an array of variable points
+     * @param aFArray an array of free points
      */
-    void init(const VArray& aVArray) { myVArray = aVArray; };
+    void init(const FArray& aFArray) { myFArray = aFArray; };
 
     /**
      * Copy constructor.
      * @param other the object to clone.
      */
 	template <typename Other>
-    CircleFromPointsBase ( const Other & other ): myFArray( other.myFArray ), myVArray( other.myVArray ) {};
+	AlgebraicCurveFromOrderedPointsBase ( const Other & other ): 
+	  myGArray( other.myGArray ), myFArray( other.myFArray ), myDistance( other.myDistance ) {};
 
     /**
      * Assignment.
      * @param other the object to copy.
      * @return a reference on 'this'.
      */
-    CircleFromPointsBase & operator= ( const CircleFromPointsBase & other )
+    AlgebraicCurveFromOrderedPointsBase & operator= ( const AlgebraicCurveFromOrderedPointsBase & other )
       {
 	if (this != &other)
           {
-            myFArray = other.myFArray; 
-            myVArray = other.myVArray; 
+            myGArray = other.myGArray; 
+            myFArray = other.myFArray;
+	    myDistance = other.myDistance; 
           }
 	return *this; 
       };
@@ -161,7 +193,7 @@ namespace DGtal
     /**
      * Destructor. Does nothing
      */
-    ~CircleFromPointsBase() {};
+    ~AlgebraicCurveFromOrderedPointsBase() {};
 
     // ----------------------- Interface --------------------------------------
   public:
@@ -175,9 +207,9 @@ namespace DGtal
      {
 	Array tmp; 
 	//lexicographic order ?
-	std::copy( myVArray.begin(), myVArray.end(), tmp.begin() ); 
-	std::copy( myFArray.begin(), myFArray.end(), tmp.begin()+V ); 
-	return determinant( tmp, toHPoint( aP ) ); 
+	std::copy( myFArray.begin(), myFArray.end(), tmp.begin() ); 
+	std::copy( myGArray.begin(), myGArray.end(), tmp.begin()+F ); 
+	return distance( tmp, toHPoint( aP ) ); 
      }
 
     //------------------ accessors -------------------------------
@@ -196,11 +228,11 @@ namespace DGtal
      */
     void selfDisplay ( std::ostream & out ) const
       {
-         std::cout << "[CircleFromPointsBase] "
-	           << F << " fixed / " << N << " points. "
+         std::cout << "[AlgebraicCurveFromOrderedPointsBase] "
+	           << F << " free / " << N << " points. "
                    << std::endl; 
-	std::copy( myVArray.begin(), myVArray.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
 	std::copy( myFArray.begin(), myFArray.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
+	std::copy( myGArray.begin(), myGArray.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
       };
     
 
@@ -221,51 +253,52 @@ namespace DGtal
     /**
      * @return determinant sign (<0 in, 0 on, >0 out)
      */
-    Value determinant(const Array& a, const HPoint& aP) const 
+    Value distance(const Array& a, const HPoint& aP) const 
      { 
-
-	//std::copy( a.begin(), a.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
-	//std::cout << aP << " " << a[2][1] << std::endl; 
-	//TODO delegate this task. 
-
- 	typedef DGtal::PointVector<2,Coordinate> Vector; 
-
-	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
-		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
-	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
-		  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
-	//std::cout << u << v << std::endl; 
-	return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
+       return myDistance(a, aP); 
      };
 
-  }; // end of class CircleFromPointsBase
+  }; // end of class AlgebraicCurveFromOrderedPointsBase
 
   } //end namespace details
 
   /////////////////////////////////////////////////////////////////////////////
-  // template class CircleFromPoints
+  // template class AlgebraicCurveFromOrderedPoints
   /**
-   * \brief Aim: Represents a circle 
+   * \brief Aim: Represents an algebraic curve 
    *
    */
-  template <DGtal::Dimension T, typename TInteger = int>
-  class CircleFromPoints: public details::CircleFromPointsBase<T,TInteger>
+  template <DGtal::Dimension T, typename TInteger = int, typename TDistance = details::AlgebraicDistanceToCircle>
+  class AlgebraicCurveFromOrderedPoints: public details::AlgebraicCurveFromOrderedPointsBase<T,TInteger,TDistance>
   {
 
   public: 
-    //for down method
-    friend class CircleFromPoints<T-1, TInteger>;  
+    /*
+     * (F+1)-class as friend for initFromUp methods
+     */
+    friend class AlgebraicCurveFromOrderedPoints<T+1, TInteger, TDistance>;  
 
     // ----------------------- Static constant ------------------------------
   public: 
-	//number of fixed points
+    /*
+     * Number of free points
+     */
     static const DGtal::Dimension F = T;
 
     // ----------------------- Nested type ------------------------------
   public: 
-    typedef CircleFromPoints<T,TInteger> Self; 
-    typedef details::CircleFromPointsBase<T,TInteger> Super; 
-    typedef CircleFromPoints<F+1, typename Self::Coordinate> Up; 
+    /*
+     * This class (curve constrained to pass through G given points)
+     */
+    typedef AlgebraicCurveFromOrderedPoints<F, TInteger, TDistance> Self;  
+    /*
+     * Type of the parent class
+     */
+    typedef details::AlgebraicCurveFromOrderedPointsBase<F, TInteger, TDistance> Super; 
+    /*
+     * Type of the (F-1)-class (curve contrained to pass through G+1 given points) 
+     */
+    typedef AlgebraicCurveFromOrderedPoints<F-1, TInteger, TDistance> Up; 
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -273,19 +306,19 @@ namespace DGtal
     /**
      * Constructor when no points are fixed.
      */
-    CircleFromPoints() { BOOST_STATIC_ASSERT(( F == 0 )); };
+    AlgebraicCurveFromOrderedPoints() { BOOST_STATIC_ASSERT(( Self::G == 0 )); };
 
     /**
      * Constructor.
-     * @param aFArray an array of fixed points
+     * @param aGArray an array of fixed points
      */
-    CircleFromPoints(const typename Self::FArray& aFArray): Super( aFArray ) {};
+    AlgebraicCurveFromOrderedPoints(const typename Self::GArray& aGArray): Super( aGArray ) {};
 
     /**
      * Copy constructor.
      * @param other the object to clone.
      */
-    CircleFromPoints ( const Self & other ): Super( other ) {};
+    AlgebraicCurveFromOrderedPoints ( const Self & other ): Super( other ) {};
 
     /**
      * Init from an instance of Up
@@ -295,41 +328,41 @@ namespace DGtal
       {
 	/// variable points: 
 	//all variable points of u
-	std::copy( u.myVArray.begin(), u.myVArray.end(), this->myVArray.begin() ); 
+	std::copy( u.myFArray.begin(), u.myFArray.end(), this->myFArray.begin() ); 
 	//+ the first (i.e. last added) fixed point of u
-	ASSERT( Up::F > 0 ); 
-	this->myVArray.back() = u.myFArray.front();
+	ASSERT( Up::G > 0 ); 
+	this->myFArray.back() = u.myGArray.front();
 	/// fixed points: 
-	std::copy( u.myFArray.begin()+1, u.myFArray.end(), this->myFArray.begin() ); 
+	std::copy( u.myGArray.begin()+1, u.myGArray.end(), this->myGArray.begin() ); 
       }
 
     /**
-     * 
+     * Build and return an instance of Up
      * @param aPoint a point 
      * @return an instance of Up ( @e aHPoint is taken as an extra fixed point)
      */
     Up getUp( const typename Self::Point& aPoint ) const
       {
-	return getUp( toHPoint( aPoint ) ); 
+	return getUp( this->toHPoint( aPoint ) ); 
       }
 
     /**
-     * Set
+     * Build and return an instance of Up
      * @param aHPoint a point (in homogeneous coordinates)
      * @return an instance of Up ( @e aHPoint is taken as an extra fixed point)
      */
     Up getUp( const typename Self::HPoint& aHPoint ) const
       {
-	boost::array<typename Self::HPoint,F+1> tmp; 
+	boost::array<typename Self::HPoint,Self::G+1> tmp; 
 	tmp.front() = aHPoint;  
-	std::copy( this->myFArray.begin(), this->myFArray.end(), tmp.begin()+1 ); 
+	std::copy( this->myGArray.begin(), this->myGArray.end(), tmp.begin()+1 ); 
 	return Up( tmp ); 
       }  
 
     /**
      * Destructor. Does nothing
      */
-    ~CircleFromPoints() {};
+    ~AlgebraicCurveFromOrderedPoints() {};
 
    private: 
 
@@ -340,27 +373,41 @@ namespace DGtal
      */
     Self & operator= ( const Self & other );
 
-  }; // end of class CircleFromPoints
+  }; // end of class AlgebraicCurveFromOrderedPoints
 
   /////////////////////////////////////////////////////////////////////////////
   // Specialization
-  template <typename TInteger>
-  class CircleFromPoints<3,TInteger>: public details::CircleFromPointsBase<3,TInteger>
+  template <typename TInteger, typename TDistance>
+  class AlgebraicCurveFromOrderedPoints<0,TInteger,TDistance>: 
+    public details::AlgebraicCurveFromOrderedPointsBase<0, TInteger, TDistance>
   {
 
   public: 
-    //for down method
-    friend class CircleFromPoints<2, TInteger>;  
+    /*
+     * (1)-class as friend for initFromUp methods
+     */
+    friend class AlgebraicCurveFromOrderedPoints<1, TInteger>;  
 
     // ----------------------- Static constant ------------------------------
   public: 
-	//number of fixed points
-    static const DGtal::Dimension F = 3;
+    /*
+     * number of free points (= 0)
+     */
+    static const DGtal::Dimension F = 0;
 
     // ----------------------- Nested type ------------------------------
   public: 
-    typedef CircleFromPoints<3,TInteger> Self; 
-    typedef details::CircleFromPointsBase<3,TInteger> Super; 
+    /*
+     * Self type
+     */
+    typedef AlgebraicCurveFromOrderedPoints<0, TInteger, TDistance> Self; 
+    /*
+     * Type of the parent class
+     */
+    typedef details::AlgebraicCurveFromOrderedPointsBase<0, TInteger, TDistance> Super; 
+    /*
+     * Type of the (F-1)-class defined as an alias of Self (= 0) 
+     */
     typedef Self Up;   
 
     // ----------------------- Standard services ------------------------------
@@ -368,21 +415,20 @@ namespace DGtal
 
     /**
      * Constructor.
-     * @param aFArray an array of fixed points
+     * @param aGArray an array of fixed points
      */
-    CircleFromPoints(const typename Self::FArray& aFArray): Super( aFArray ) {};
-
+    AlgebraicCurveFromOrderedPoints(const typename Self::GArray& aGArray): Super( aGArray ) {};
 
     /**
      * Copy constructor.
      * @param other the object to clone.
      */
-    CircleFromPoints ( const Self & other ): Super( other ) {};
+    AlgebraicCurveFromOrderedPoints ( const Self & other ): Super( other ) {};
 
     /**
      * Destructor. Does nothing
      */
-    ~CircleFromPoints() {};
+    ~AlgebraicCurveFromOrderedPoints() {};
 
     /**
      * Does nothing
@@ -398,7 +444,7 @@ namespace DGtal
      */
     Up getUp( const typename Self::Point& /*aPoint */) const
       {
-	*this; 
+	return *this; 
       }
 
     /**
@@ -411,13 +457,7 @@ namespace DGtal
 	return *this; 
       }  
 
-    /**
-     * @return the style name used for drawing this object.
-     */
-    std::string className() const { return "CircleFromPoints"; };
-
    private: 
-
 
     /**
      * Assignment.
@@ -426,19 +466,19 @@ namespace DGtal
      */
     Self & operator= ( const Self & other );
 
-  }; // end of class CircleFromPoints
+  }; // end of class AlgebraicCurveFromOrderedPoints
 
   /**
-   * Overloads 'operator<<' for displaying objects of class 'CircleFromPoints'.
+   * Overloads 'operator<<' for displaying objects of class 'AlgebraicCurveFromOrderedPoints'.
    * @param out the output stream where the object is written.
-   * @param object the object of class 'CircleFromPoints' to write.
+   * @param object the object of class 'AlgebraicCurveFromOrderedPoints' to write.
    * @return the output stream after the writing.
    */
-  template <DGtal::Dimension T, typename TInteger>
+  template <DGtal::Dimension T, typename TInteger, typename TDistance>
   inline
   std::ostream&
   operator<< ( std::ostream & out, 
-	       const details::CircleFromPointsBase<T, TInteger> & object )
+	       const details::AlgebraicCurveFromOrderedPointsBase<T, TInteger, TDistance> & object )
   {
     object.selfDisplay( out );
     return out;
@@ -450,12 +490,12 @@ namespace DGtal
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
-//#include "DGtal/shapes/fromPoints/CircleFromPoints.ih"
+//#include "DGtal/shapes/fromPoints/AlgebraicCurveFromOrderedPoints.ih"
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-#endif // !defined CircleFromPoints_h
+#endif // !defined AlgebraicCurveFromOrderedPoints_h
 
-#undef CircleFromPoints_RECURSES
-#endif // else defined(CircleFromPoints_RECURSES)
+#undef AlgebraicCurveFromOrderedPoints_RECURSES
+#endif // else defined(AlgebraicCurveFromOrderedPoints_RECURSES)

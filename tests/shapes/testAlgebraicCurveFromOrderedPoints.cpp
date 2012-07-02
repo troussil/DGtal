@@ -15,7 +15,7 @@
  **/
 
 /**
- * @file testCircleFromPoints.cpp
+ * @file testAlgebraicCurveFromOrderedPoints.cpp
  * @author Tristan Roussillon (\c
  * tristan.roussillon@liris.cnrs.fr ) Laboratoire d'InfoRmatique en
  * Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS,
@@ -36,7 +36,7 @@
 
 #include "DGtal/base/Common.h"
 #include "DGtal/kernel/PointVector.h"
-#include "DGtal/shapes/fromPoints/CircleFromPoints.h"
+#include "DGtal/shapes/fromPoints/AlgebraicCurveFromOrderedPoints.h"
 
 //space / domain
 #include "DGtal/kernel/SpaceND.h"
@@ -136,7 +136,7 @@ bool algo(const I& itb, const I& ite, S& aShape);
 template <typename I, typename P, typename S>
 bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 {
-  if (S::F < S::N)
+  if (S::G > 0)
     {
       typename S::Up tmp = aShape.getUp( p ); 
       bool res = algo( itb, ite, tmp); 
@@ -155,15 +155,15 @@ bool algo(const I& itb, const I& ite, S& aShape)
 
   //init
   typedef typename S::Point Point; 
-  boost::array<Point,S::V> a;
+  boost::array<Point,S::G> a;
   unsigned int counter = 0;  
-  for (I it = itb; ( (it != ite)&&(counter < S::V) ); ++counter)
+  for (I it = itb; ( (it != ite)&&(counter < S::G) ); ++counter)
     {
       Point p = it->first; 
       while ( (it != ite)&&(p == it->first) ) ++it;  
       a[counter] = p; 
     }
-  ASSERT( counter == S::V ); 
+  ASSERT( counter == S::G ); 
   aShape.init( a.begin(), a.end() ); 
   //trace.info() << "Init: " << std::endl << aShape << std::endl; 
   //TODO init pb when if the three first points have the wrong orientation
@@ -220,7 +220,7 @@ bool testBallRecognition()
       typedef GridCurve<KSpace>::IncidentPointsRange Range; 
       Range r = c.getIncidentPointsRange();
     
-      CircleFromPoints<0> circle; 
+      AlgebraicCurveFromOrderedPoints<3> circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
       trace.info() << std::endl << "Solution: " << circle << std::endl; 
@@ -253,8 +253,8 @@ bool fun(const T& t)
 
   std::cout << t << std::endl; 
 
-  if (T::F < T::N)
-    return fun( t.getUp( Point(T::F, T::F*T::F+1) ) ); 
+  if (T::F > 0)
+    return fun( t.getUp( Point(T::G, T::G*T::G+1) ) ); 
   else {
     typedef typename T::Value Det;
     Det d = t( Point::diagonal(0) );
@@ -263,12 +263,12 @@ bool fun(const T& t)
   }
 }
 
-bool testCircleFromPoints()
+bool testAlgebraicCurveFromOrderedPoints()
 {
 
-  trace.beginBlock("Simple test for CircleFromPoints"); 
+  trace.beginBlock("Simple test for AlgebraicCurveFromOrderedPoints"); 
   
-  bool res = fun( CircleFromPoints<0,double>() ); 
+  bool res = fun( AlgebraicCurveFromOrderedPoints<3,double>() ); 
 
   trace.endBlock(); 
   
@@ -281,8 +281,8 @@ bool testDeterminant()
 
   trace.beginBlock("Determinant test"); 
 
-  CircleFromPoints<0> c;
-  typedef CircleFromPoints<0>::Point Point; 
+  AlgebraicCurveFromOrderedPoints<3> c;
+  typedef AlgebraicCurveFromOrderedPoints<3>::Point Point; 
   std::vector<Point> v; 
   v.push_back( Point(0,1) ); 
   v.push_back( Point(150,18) ); 
@@ -290,7 +290,7 @@ bool testDeterminant()
   c.init( v.begin(), v.end() ); 
   trace.info() << c << endl;
 
-  typedef CircleFromPoints<0>::Value Det;
+  typedef AlgebraicCurveFromOrderedPoints<3>::Value Det;
   Det d = c( Point(0,0) );   
   trace.info() << Point(0,0) << " is at distance " << d << endl;
   bool res = true; 
@@ -313,7 +313,7 @@ int main( int argc, char** argv )
   trace.info() << endl;
 
 
-  bool res = testCircleFromPoints() && testDeterminant() && testBallRecognition();
+  bool res = testAlgebraicCurveFromOrderedPoints() && testDeterminant() && testBallRecognition();
 
 
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
