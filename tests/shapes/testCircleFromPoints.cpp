@@ -91,39 +91,39 @@ ballGenerator(double aCx, double aCy, double aR, bool aFlagIsCW)
   KSpace K;
   bool ok = K.init( dig.getLowerBound(), dig.getUpperBound(), true );
   if ( ! ok )
-  {
+    {
       std::cerr << " "
-    << " error in creating KSpace." << std::endl;
+		<< " error in creating KSpace." << std::endl;
       return GridCurve();
-  }
-  try 
-  {
-
-    // Extracts shape boundary
-    SurfelAdjacency<KSpace::dimension> SAdj( true );
-    SCell bel = Surfaces<KSpace>::findABel( K, dig, 10000 );
-    // Getting the consecutive surfels of the 2D boundary
-    std::vector<Point> points, points2;
-    Surfaces<KSpace>::track2DBoundaryPoints( points, K, SAdj, dig, bel );
-    //counter-clockwise oriented by default
-    GridCurve c; 
-    if (aFlagIsCW)
-    {
-      points2.assign( points.rbegin(), points.rend() );
-      c.initFromVector(points2); 
-    } 
-    else 
-    {
-      c.initFromVector(points); 
     }
-    return c;
-  }
+  try 
+    {
+
+      // Extracts shape boundary
+      SurfelAdjacency<KSpace::dimension> SAdj( true );
+      SCell bel = Surfaces<KSpace>::findABel( K, dig, 10000 );
+      // Getting the consecutive surfels of the 2D boundary
+      std::vector<Point> points, points2;
+      Surfaces<KSpace>::track2DBoundaryPoints( points, K, SAdj, dig, bel );
+      //counter-clockwise oriented by default
+      GridCurve c; 
+      if (aFlagIsCW)
+	{
+	  points2.assign( points.rbegin(), points.rend() );
+	  c.initFromVector(points2); 
+	} 
+      else 
+	{
+	  c.initFromVector(points); 
+	}
+      return c;
+    }
   catch ( InputException e )
-  {
+    {
       std::cerr << " "
-    << " error in finding a bel." << std::endl;
+		<< " error in finding a bel." << std::endl;
       return GridCurve();
-  }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -131,54 +131,62 @@ ballGenerator(double aCx, double aCy, double aR, bool aFlagIsCW)
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename I, typename S>
+bool algo(const I& itb, const I& ite, S& aShape); 
+
+template <typename I, typename P, typename S>
+bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
+{
+  if (S::F < S::N)
+    {
+      typename S::Up tmp = aShape.set( p ); 
+      bool res = algo( itb, ite, tmp); 
+      //trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
+      aShape.initFromUp( tmp ); 
+      //trace.info()  << "new init " << std::endl << aShape << std::endl; 
+      return res; 
+    }
+  else 
+    return false; 
+}
+
+template <typename I, typename S>
 bool algo(const I& itb, const I& ite, S& aShape)
 {
 
-if (S::F < S::N)
-{
-	//init
-	typedef typename S::Point Point; 
- 	boost::array<Point,S::V> a;
-	unsigned int counter = 0;  
-	for (I it = itb; ( (it != ite)&&(counter < S::V) ); ++counter)
-	{
-		Point p = it->first; 
-		while ( (it != ite)&&(p == it->first) ) ++it;  
-		a[counter] = p; 
+  //init
+  typedef typename S::Point Point; 
+  boost::array<Point,S::V> a;
+  unsigned int counter = 0;  
+  for (I it = itb; ( (it != ite)&&(counter < S::V) ); ++counter)
+    {
+      Point p = it->first; 
+      while ( (it != ite)&&(p == it->first) ) ++it;  
+      a[counter] = p; 
+    }
+  ASSERT( counter == S::V ); 
+  aShape.init( a.begin(), a.end() ); 
+  //trace.info() << "Init: " << std::endl << aShape << std::endl; 
+  //TODO init pb when if the three first points have the wrong orientation
+
+  //main loop
+  bool res = true; 
+  for (I it = itb; ( (it != ite)&&(res) ); ++it)
+    {
+
+      //trace.info() << " new pair " << it->first << it->second << std::endl; 
+
+      if ( aShape( it->first ) < 0 )
+	{//inner point outside
+	  //trace.info() << "inner point " << it->first << " at wrong location " << std::endl; 
+	  res = algoUpdate( itb, it , it->first, aShape ); 
 	}
-	ASSERT( counter == S::V ); 
-	aShape.init( a.begin(), a.end() ); 
-	trace.info() << "Init: " << std::endl << aShape << std::endl; 
-
-	//main loop
-	bool res = true; 
-	for (I it = itb; ( (it != ite)&&(res) ); ++it)
-	{
-
-	trace.info() << " new pair " << it->first << it->second << std::endl; 
-
-		if ( aShape( it->first ) < 0 )
-		{//inner point outside
-			trace.info() << it->first << " at wrong location " << std::endl; 
-			typename S::Up tmp = aShape.set( it->first ); 
-			res = algo( itb, it, tmp); 
-			trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
-			aShape.initFromUp( tmp ); 
-			trace.info()  << "new init " << std::endl << aShape << std::endl; 
-		}
-		if ( (res)&&( aShape( it->second ) > 0 ) )
-		{//outer point inside
-			trace.info() << it->second << " at wrong location " << std::endl; 
-			typename S::Up tmp = aShape.set( it->second ); 
-			res = algo( itb, it, tmp ); 
-			trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
-			aShape.initFromUp( tmp ); 
-			trace.info()  << "new init " << std::endl << aShape << std::endl; 
-		}
-	} 
-	return res; 
-}	//TODO: tester si c'est bon (séparation) avec 3 pts fixes, sinon renvoyer faux
-else return false; 
+      if ( (res)&&( aShape( it->second ) > 0 ) )
+	{//outer point inside
+	  //trace.info() << "outer point " << it->second << " at wrong location " << std::endl; 
+	  res = algoUpdate( itb, it, it->second, aShape ); 
+	}
+    } 
+  return res; 
 
 }
 
@@ -186,7 +194,7 @@ else return false;
 /**
  * Recogition of randomly generated digital circles
  */
-bool testRecognition()
+bool testBallRecognition()
 {
 
   typedef KhalimskySpaceND<2,int> KSpace; 
@@ -198,27 +206,29 @@ bool testRecognition()
   trace.beginBlock ( "Recognition" );
   
   for (unsigned int i = 0; i < 1; ++i)
-  {
-    //generate digital circle
-    double cx = (rand()%100 ) / 100.0;
-    double cy = (rand()%100 ) / 100.0;
-    double radius = (rand()%100 )+0;
-    c = ballGenerator<KSpace>( cx, cy, radius, ((i%2)==1) ); 
-    trace.info() << " #ball #" << i << " c(" << cx << "," << cy << ") r=" << radius << endl; 
+    {
+      //generate digital circle
+      double cx = (rand()%100 ) / 100.0;
+      double cy = (rand()%100 ) / 100.0;
+      double radius = (rand()%100 )+0;
+      // double cx = 0, cy = 0; 
+      // double radius = 5.0; 
+      c = ballGenerator<KSpace>( cx, cy, radius, ((i%2)==1) ); 
+      trace.info() << " #ball #" << i << " c(" << cx << "," << cy << ") r=" << radius << endl; 
     
-    //range
-    typedef GridCurve<KSpace>::IncidentPointsRange Range; 
-    Range r = c.getIncidentPointsRange();
+      //range
+      typedef GridCurve<KSpace>::IncidentPointsRange Range; 
+      Range r = c.getIncidentPointsRange();
     
-    CircleFromPoints<0> circle; 
-    bool flag = algo( r.begin(), r.end(), circle);
+      CircleFromPoints<0> circle; 
+      bool flag = algo( r.begin(), r.end(), circle);
 
-    trace.info() << std::endl << "Solution: " << circle << std::endl; 
+      trace.info() << std::endl << "Solution: " << circle << std::endl; 
 
-    //conclusion
-    nbok += flag ? 1 : 0; 
-    nb++;
-  }
+      //conclusion
+      nbok += flag ? 1 : 0; 
+      nb++;
+    }
 
   trace.endBlock();
   
@@ -239,18 +249,18 @@ bool testRecognition()
 template<typename T>
 bool fun(const T& t) 
 {
-	typedef typename T::Point Point; 
+  typedef typename T::Point Point; 
 
-     	std::cout << t << std::endl; 
+  std::cout << t << std::endl; 
 
-	if (T::F < T::N)
-		return fun( t.set( Point(T::F, T::F*T::F+1) ) ); 
-	else {
-		typedef typename T::Value Det;
-		Det d = t( Point::diagonal(0) );
-		std::cout << d << std::endl; 
-		return (d < 0); 
-	}
+  if (T::F < T::N)
+    return fun( t.set( Point(T::F, T::F*T::F+1) ) ); 
+  else {
+    typedef typename T::Value Det;
+    Det d = t( Point::diagonal(0) );
+    std::cout << d << std::endl; 
+    return (d < 0); 
+  }
 }
 
 bool testCircleFromPoints()
@@ -258,7 +268,7 @@ bool testCircleFromPoints()
 
   trace.beginBlock("Simple test for CircleFromPoints"); 
   
-	bool res = fun( CircleFromPoints<0,double>() ); 
+  bool res = fun( CircleFromPoints<0,double>() ); 
 
   trace.endBlock(); 
   
@@ -271,20 +281,20 @@ bool testDeterminant()
 
   trace.beginBlock("Determinant test"); 
 
-	CircleFromPoints<0> c;
-	typedef CircleFromPoints<0>::Point Point; 
-	std::vector<Point> v; 
-	v.push_back( Point(0,1) ); 
-	v.push_back( Point(150,18) ); 
-	v.push_back( Point(250,-48) ); 
-	c.init( v.begin(), v.end() ); 
-	trace.info() << c << endl;
+  CircleFromPoints<0> c;
+  typedef CircleFromPoints<0>::Point Point; 
+  std::vector<Point> v; 
+  v.push_back( Point(0,1) ); 
+  v.push_back( Point(150,18) ); 
+  v.push_back( Point(250,-48) ); 
+  c.init( v.begin(), v.end() ); 
+  trace.info() << c << endl;
 
-	typedef CircleFromPoints<0>::Value Det;
-	Det d = c( Point(0,0) );   
-	trace.info() << Point(0,0) << " is at distance " << d << endl;
-	bool res = true; 
-	if (d != 4026300) res = false;  
+  typedef CircleFromPoints<0>::Value Det;
+  Det d = c( Point(0,0) );   
+  trace.info() << Point(0,0) << " is at distance " << d << endl;
+  bool res = true; 
+  if (d != 4026300) res = false;  
 
   trace.endBlock(); 
   
@@ -303,8 +313,7 @@ int main( int argc, char** argv )
   trace.info() << endl;
 
 
-  bool res = testCircleFromPoints() && testDeterminant() && testRecognition();
-
+  bool res = testCircleFromPoints() && testDeterminant() && testBallRecognition();
 
 
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
