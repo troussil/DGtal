@@ -52,6 +52,9 @@
 namespace DGtal
 {
 
+  namespace details
+  {
+
   /////////////////////////////////////////////////////////////////////////////
   // template class CircleFromPointsBase
   /**
@@ -84,6 +87,11 @@ namespace DGtal
 
     // ------------------------- Private Datas --------------------------------
   protected:
+    /**
+       Array of points (first V points, variable, last F points, fixed)
+    */
+    //    Array myArray;
+
     /**
        Array of fixed points
     */
@@ -232,6 +240,8 @@ namespace DGtal
 
   }; // end of class CircleFromPointsBase
 
+  } //end namespace details
+
   /////////////////////////////////////////////////////////////////////////////
   // template class CircleFromPoints
   /**
@@ -239,7 +249,7 @@ namespace DGtal
    *
    */
   template <DGtal::Dimension T, typename TInteger = int>
-  class CircleFromPoints: public CircleFromPointsBase<T,TInteger>
+  class CircleFromPoints: public details::CircleFromPointsBase<T,TInteger>
   {
 
   public: 
@@ -254,7 +264,7 @@ namespace DGtal
     // ----------------------- Nested type ------------------------------
   public: 
     typedef CircleFromPoints<T,TInteger> Self; 
-    typedef CircleFromPointsBase<T,TInteger> Super; 
+    typedef details::CircleFromPointsBase<T,TInteger> Super; 
     typedef CircleFromPoints<F+1, typename Self::Coordinate> Up; 
 
     // ----------------------- Standard services ------------------------------
@@ -294,13 +304,13 @@ namespace DGtal
       }
 
     /**
-     * Set
+     * 
      * @param aPoint a point 
      * @return an instance of Up ( @e aHPoint is taken as an extra fixed point)
      */
-    Up set( const typename Self::Point& aPoint ) const
+    Up getUp( const typename Self::Point& aPoint ) const
       {
-	return set( toHPoint( aPoint ) ); 
+	return getUp( toHPoint( aPoint ) ); 
       }
 
     /**
@@ -308,7 +318,7 @@ namespace DGtal
      * @param aHPoint a point (in homogeneous coordinates)
      * @return an instance of Up ( @e aHPoint is taken as an extra fixed point)
      */
-    Up set( const typename Self::HPoint& aHPoint ) const
+    Up getUp( const typename Self::HPoint& aHPoint ) const
       {
 	boost::array<typename Self::HPoint,F+1> tmp; 
 	tmp.front() = aHPoint;  
@@ -335,7 +345,7 @@ namespace DGtal
   /////////////////////////////////////////////////////////////////////////////
   // Specialization
   template <typename TInteger>
-  class CircleFromPoints<3,TInteger>: public CircleFromPointsBase<3,TInteger>
+  class CircleFromPoints<3,TInteger>: public details::CircleFromPointsBase<3,TInteger>
   {
 
   public: 
@@ -350,7 +360,7 @@ namespace DGtal
     // ----------------------- Nested type ------------------------------
   public: 
     typedef CircleFromPoints<3,TInteger> Self; 
-    typedef CircleFromPointsBase<3,TInteger> Super; 
+    typedef details::CircleFromPointsBase<3,TInteger> Super; 
     typedef Self Up;   
 
     // ----------------------- Standard services ------------------------------
@@ -382,21 +392,21 @@ namespace DGtal
       }
 
     /**
-     * Set
+     *
      * @param aPoint a point 
      * @return an instance of Up
      */
-    Up set( const typename Self::Point& /*aPoint */) const
+    Up getUp( const typename Self::Point& /*aPoint */) const
       {
 	*this; 
       }
 
     /**
-     * Set
+     *
      * @param aHPoint a point (in homogeneous coordinates)
      * @return an instance of Up
      */
-    Up set( const typename Self::HPoint& /*aHPoint*/ ) const
+    Up getUp( const typename Self::HPoint& /*aHPoint*/ ) const
       {
 	return *this; 
       }  
@@ -428,7 +438,7 @@ namespace DGtal
   inline
   std::ostream&
   operator<< ( std::ostream & out, 
-        const CircleFromPointsBase<T, TInteger> & object )
+	       const details::CircleFromPointsBase<T, TInteger> & object )
   {
     object.selfDisplay( out );
     return out;

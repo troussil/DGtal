@@ -138,7 +138,7 @@ bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 {
   if (S::F < S::N)
     {
-      typename S::Up tmp = aShape.set( p ); 
+      typename S::Up tmp = aShape.getUp( p ); 
       bool res = algo( itb, ite, tmp); 
       //trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
       aShape.initFromUp( tmp ); 
@@ -254,7 +254,7 @@ bool fun(const T& t)
   std::cout << t << std::endl; 
 
   if (T::F < T::N)
-    return fun( t.set( Point(T::F, T::F*T::F+1) ) ); 
+    return fun( t.getUp( Point(T::F, T::F*T::F+1) ) ); 
   else {
     typedef typename T::Value Det;
     Det d = t( Point::diagonal(0) );
