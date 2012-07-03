@@ -54,8 +54,11 @@ namespace DGtal
 
   namespace details
   {
+    //polynome that can be interpolated from 3 points
+    //and that defines a circle
     template<typename TInteger>
-    struct CircleFromPoints 
+    struct CircleFromPoints: 
+      public boost::array< DGtal::PointVector<3,TInteger>, 3 >
     {
     public: 
       static const DGtal::Dimension N = 3; 
@@ -66,31 +69,32 @@ namespace DGtal
      
     public: 
       Integer
-      operator() (const boost::array<Point, N>& a, const Point& aP) const 
+      operator() (const Point& aP) const 
       {
- 	typedef DGtal::PointVector<2,Integer> Vector; 
+ 	// typedef DGtal::PointVector<2,Integer> Vector; 
 
-	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
-		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
-	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
-		  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
-	return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
-
+	// Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
+	// 	  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
+	// Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
+	// 	  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
+	// return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
+	return 0; 
       }
     }; 
   /////////////////////////////////////////////////////////////////////////////
   // template class AlgebraicCurveFromOrderedPointsBase
   /**
    * \brief Aim: Represents an algebraic curve, which 
-   * is constrained to pass through @e F given points.
+   * is constrained to pass through @e G given points.
    *
    * @tparam TPolynome type of the polynome interpolating 
-   * the @e F given points. It is a functor that returns 
-   * the algebraic distance of a point to the curve.
+   * @e N points (including the G given points). It is 
+   * both an array of N points and a functor that returns 
+   * the algebraic distance of any point to the curve.
    *
    * @tparam F number of free points (between 0 and N, 
    * the maximal number of points that uniquely define
-   * a given curve)
+   * the polynome)
    *
    */
     template <typename TPolynome, DGtal::Dimension F = TPolynome::N, typename TInteger = typename TPolynome::Integer>
@@ -126,30 +130,35 @@ namespace DGtal
      * at infinity and different otherwise)
     */
     typedef DGtal::PointVector<3,Coordinate> HPoint;
-
     /**
      * Return type of the operator()
     */
     typedef Coordinate Value;//TODO to promote or to adapt (-1, 0, 1) ?
+    /**
+     * Type of polynome defined by interpolation
+    */
+    typedef TPolynome Polynome;
+
 
     typedef boost::array<HPoint,G> GArray;  //array of fixed points
-    typedef boost::array<HPoint,F> FArray;  //array of variable points
-    typedef boost::array<HPoint,N> Array;  //array of all points
+    // typedef boost::array<HPoint,F> FArray;  //array of variable points
+    // typedef boost::array<HPoint,N> Array;  //array of all points
 
     // ------------------------- Private Datas --------------------------------
   protected:
+    // /**
+    //  * Array of fixed points
+    //  */
+    // GArray myGArray;
+    // /**
+    //    Array of variable points
+    // */
+    // FArray myFArray;
     /**
-       Array of fixed points
-    */
-    GArray myGArray;
-    /**
-       Array of variable points
-    */
-    FArray myFArray;
-    /**
-     * Distance functor
-    */
-    TPolynome myPolynome;
+     * Polynome defined by interpolation from N points: 
+     * F free points followed by G given points (F+G = N)
+     */
+    Polynome myPolynome;
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -165,7 +174,26 @@ namespace DGtal
      * @param aGArray an array of given points
      */
     AlgebraicCurveFromOrderedPointsBase(const GArray& aGArray): 
-      myGArray( aGArray ), myFArray(), myPolynome() {};
+      myPolynome() 
+    {
+	typename Polynome::iterator ait = myPolynome.begin()+F; 
+	std::copy( aGArray.begin(), aGArray.end(), ait ); 
+    };
+
+    /**
+     * Constructor.
+     * @param itb begin iterator on points
+     * @param ite end iterator on points
+     * @param aGArray an array of given points
+     */
+    template <typename I>
+    AlgebraicCurveFromOrderedPointsBase(const I& itb, const I& ite): 
+      myPolynome() 
+    {
+	typename Polynome::iterator ait = myPolynome.begin()+F; 
+	for (I it = itb; ( (it != ite)&&(ait != myPolynome.end()) ); ++it, ++ait)
+            *ait = toHPoint( *it );  
+    };
 
 
     /**
@@ -176,16 +204,16 @@ namespace DGtal
     template <typename I>
     void init(const I& itb, const I& ite) 
       { 
-	typename FArray::iterator ait = myFArray.begin(); 
-	for (I it = itb; ( (it != ite)&&(ait != myFArray.end()) ); ++it, ++ait)
+	typename TPolynome::iterator ait = myPolynome.begin(); 
+	for (I it = itb; ( (it != ite)&&(ait != myPolynome.end()) ); ++it, ++ait)
             *ait = toHPoint( *it );  
       };
 
-    /**
-     * Init.
-     * @param aFArray an array of free points
-     */
-    void init(const FArray& aFArray) { myFArray = aFArray; };
+    // /**
+    //  * Init.
+    //  * @param aFArray an array of free points
+    //  */
+    // void init(const FArray& aFArray) { myFArray = aFArray; };
 
     /**
      * Copy constructor.
@@ -193,7 +221,7 @@ namespace DGtal
      */
 	template <typename Other>
 	AlgebraicCurveFromOrderedPointsBase ( const Other & other ): 
-	  myGArray( other.myGArray ), myFArray( other.myFArray ), myPolynome( other.myPolynome ) {};
+	  myPolynome( other.myPolynome ) {};
 
     /**
      * Assignment.
@@ -204,8 +232,6 @@ namespace DGtal
       {
 	if (this != &other)
           {
-            myGArray = other.myGArray; 
-            myFArray = other.myFArray;
 	    myPolynome = other.myPolynome; 
           }
 	return *this; 
@@ -220,17 +246,13 @@ namespace DGtal
   public:
 
     /**
-     * Fonction
+     * Function
      * @param aPoint any point.
      * @return value (<0, 0 on, >0 )
      */
     Value operator()(const Point& aP) const 
      {
-	Array tmp; 
-	//lexicographic order ?
-	std::copy( myFArray.begin(), myFArray.end(), tmp.begin() ); 
-	std::copy( myGArray.begin(), myGArray.end(), tmp.begin()+F ); 
-	return myPolynome(tmp, toHPoint( aP ) ); 
+	return myPolynome( toHPoint( aP ) ); 
      }
 
     //------------------ useful functions -------------------------------
@@ -249,13 +271,29 @@ namespace DGtal
 
     //------------------ accessors -------------------------------
     /**
-     * Checks the validity/consistency of the object.
+     * Checks the validity/consistency of the object,
+     * ie. checks if all points are not confounded (in O(N^2) )
      * @return 'true' if the object is valid, 'false' otherwise.
      */
     bool isValid() const 
     { 
-      //TODO must check if all points are not confounded (in O(N^2) )
-      return true; 
+      bool res = true; 
+
+      for (typename Polynome::const_iterator i = myPolynome.begin(); 
+	   i != myPolynome.end(); ++i)
+	{
+	  for (typename Polynome::const_iterator j = i; 
+	       j != myPolynome.end(); ++j)
+	    {
+	      if (i != j)
+		{
+		  if (*i == *j)
+		    res = false; 
+		}
+	    }	  
+	}
+ 
+     return res; 
     };
    
 
@@ -270,8 +308,7 @@ namespace DGtal
          std::cout << "[AlgebraicCurveFromOrderedPointsBase] "
 	           << F << " free / " << N << " points. "
                    << std::endl; 
-	std::copy( myFArray.begin(), myFArray.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
-	std::copy( myGArray.begin(), myGArray.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
+	std::copy( myPolynome.begin(), myPolynome.end(), std::ostream_iterator<HPoint>(std::cout, ",") ); 
       };
     
 
@@ -280,6 +317,7 @@ namespace DGtal
 
     /**
      * @return @e aPoint in homogeneous coordinates.
+     * (the last coordinate is set to 1)
      */
     HPoint toHPoint(const Point& aPoint) const 
      { 
@@ -298,16 +336,7 @@ namespace DGtal
   // template class AlgebraicCurveFromOrderedPoints
   /**
    * \brief Aim: Represents an algebraic curve, which 
-   * is constrained to pass through @e F given points.
-   *
-   * @tparam TPolynome type of the polynome interpolating 
-   * the @e F given points. It is a functor that returns 
-   * the algebraic distance of a point to the curve.
-   *
-   * @tparam T number of free points (between 0 and N, 
-   * the maximal number of points that uniquely define
-   * a given curve)
-   *
+   * is constrained to pass through @e G given points / N.
    */
   template <typename TPolynome, DGtal::Dimension T = TPolynome::N, typename TInteger = typename TPolynome::Integer>
   class AlgebraicCurveFromOrderedPoints: 
@@ -363,14 +392,15 @@ namespace DGtal
      */
     AlgebraicCurveFromOrderedPoints ( const Self & other ): Super( other ) {};
 
-    /**
-     * Set the last free point as the first given point.
-     */
-    void shift() 
-    {
-      BOOST_STATIC_ASSERT(( Self::F > 0 ));
-      this->myFArray[1] = this->myFArray[0]; 
-    }
+    //is this method necessary ?
+    // /**
+    //  * Set the last free point as the first given point.
+    //  */
+    // void shift() 
+    // {
+    //   BOOST_STATIC_ASSERT(( Self::F > 0 ));
+    //   this->myPolynome[1] = this->myFArray[0]; 
+    // }
 
     /**
      * Init from an instance of Up
@@ -378,20 +408,20 @@ namespace DGtal
      */
     void initFromUp(const Up& u) 
       {
-	/// variable points: 
-	//all variable points of u
-	std::copy( u.myFArray.begin(), u.myFArray.end(), this->myFArray.begin() ); 
+	///free points: 
+	//all free points of u
+	std::copy( u.myPolynome.begin(), u.myPolynome.begin()+Up::F, this->myPolynome.begin() ); 
 	//+ the first (i.e. last added) fixed point of u
 	ASSERT( Up::G > 0 ); 
-	this->myFArray.back() = u.myGArray.front();
-	/// fixed points: 
-	std::copy( u.myGArray.begin()+1, u.myGArray.end(), this->myGArray.begin() ); 
+	this->myPolynome[Up::F] = u.myPolynome[Up::F+1];
+	///given points: 
+	std::copy( u.myPolynome.begin()+Up::F, u.myPolynome.end(), this->myPolynome.begin()+(Up::F+1) ); 
       }
 
     /**
      * Build and return an instance of Up
      * @param aPoint a point 
-     * @return an instance of Up ( @e aHPoint is taken as an extra fixed point)
+     * @return an instance of Up ( @e aPoint is taken as an extra fixed point)
      */
     Up getUp( const typename Self::Point& aPoint ) const
       {
@@ -407,7 +437,7 @@ namespace DGtal
       {
 	boost::array<typename Self::HPoint,Self::G+1> tmp; 
 	tmp.front() = aHPoint;  
-	std::copy( this->myGArray.begin(), this->myGArray.end(), tmp.begin()+1 ); 
+	std::copy( this->myPolynome.begin()+Self::F, this->myPolynome.end(), tmp.begin()+1 ); 
 	return Up( tmp ); 
       }  
 
@@ -483,12 +513,12 @@ namespace DGtal
      */
     ~AlgebraicCurveFromOrderedPoints() {};
 
-    /**
-     * Does nothing
-     */
-    void shift( )
-      {
-      }
+    // /**
+    //  * Does nothing
+    //  */
+    // void shift( )
+    //   {
+    //   }
 
     /**
      * Does nothing
