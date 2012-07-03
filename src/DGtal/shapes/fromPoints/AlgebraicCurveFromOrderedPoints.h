@@ -18,7 +18,7 @@
 
 /**
  * @file AlgebraicCurveFromOrderedPoints.h
- * @brief Representation of a AlgebraicCurveFromOrderedPoints uniquely defined by two 2D points.
+ * @brief Representation of an algebraic curve
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
@@ -80,12 +80,13 @@ namespace DGtal
    * \brief Aim: Represents an algebraic curve, which 
    * is contrained to pass through @e F given points.
    *
+   * @tparam TDistance type of functor, which computes 
+   * the algebraic distance to the curve
+   *
    * @tparam F number of free points (between 0 and N, 
    * the maximal number of points that uniquely define
    * a given curve)
    *
-   * @tparam TDistance type of functor, which computes 
-   * the algebraic distance to the curve
    */
     template <DGtal::Dimension F, typename TInteger = int, typename TDistance = AlgebraicDistanceToCircle>
   struct AlgebraicCurveFromOrderedPointsBase
@@ -212,12 +213,30 @@ namespace DGtal
 	return distance( tmp, toHPoint( aP ) ); 
      }
 
+    //------------------ useful functions -------------------------------
+
+    /**
+     * Return a point to infinity (last homogeneous coordinate set to 0).
+     * @return the point.
+     */
+    HPoint toInfinity() const
+    {
+      HPoint p = HPoint::diagonal(1); 
+      p[2] = 0; 
+      return p; 
+    }
+
+
     //------------------ accessors -------------------------------
     /**
      * Checks the validity/consistency of the object.
      * @return 'true' if the object is valid, 'false' otherwise.
      */
-    bool isValid() const { return true; };
+    bool isValid() const 
+    { 
+      //TODO must check if all points are not confounded (in O(N^2) )
+      return true; 
+    };
    
 
     //------------------ display -------------------------------
@@ -319,6 +338,15 @@ namespace DGtal
      * @param other the object to clone.
      */
     AlgebraicCurveFromOrderedPoints ( const Self & other ): Super( other ) {};
+
+    /**
+     * Set the last free point as the first given point.
+     */
+    void shift() 
+    {
+      BOOST_STATIC_ASSERT(( Self::F > 0 ));
+      this->myFArray[1] = this->myFArray[0]; 
+    }
 
     /**
      * Init from an instance of Up
@@ -429,6 +457,13 @@ namespace DGtal
      * Destructor. Does nothing
      */
     ~AlgebraicCurveFromOrderedPoints() {};
+
+    /**
+     * Does nothing
+     */
+    void shift( )
+      {
+      }
 
     /**
      * Does nothing
