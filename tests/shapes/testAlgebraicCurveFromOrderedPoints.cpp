@@ -165,7 +165,7 @@ bool algo(const I& itb, const I& ite, S& aShape)
     }
   ASSERT( counter == S::F ); 
   aShape.init( a.begin(), a.end() ); 
-  trace.info() << "Init: " << std::endl << aShape << std::endl; 
+  //trace.info() << "Init: " << std::endl << aShape << std::endl; 
   //TODO init pb when if the three first points have the wrong orientation
 
   //main loop

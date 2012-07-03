@@ -71,14 +71,16 @@ namespace DGtal
       Integer
       operator() (const Point& aP) const 
       {
- 	// typedef DGtal::PointVector<2,Integer> Vector; 
+	typedef DGtal::PointVector<2,Integer> Vector; 
 
-	// Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
-	// 	  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
-	// Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
-	// 	  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
-	// return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
-	return 0; 
+	const Point* a = this->data(); 
+	ASSERT( a ); 
+
+	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
+		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
+	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
+		  (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) );
+	return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
       }
     }; 
   /////////////////////////////////////////////////////////////////////////////
@@ -408,14 +410,16 @@ namespace DGtal
      */
     void initFromUp(const Up& u) 
       {
-	///free points: 
-	//all free points of u
-	std::copy( u.myPolynome.begin(), u.myPolynome.begin()+Up::F, this->myPolynome.begin() ); 
-	//+ the first (i.e. last added) fixed point of u
-	ASSERT( Up::G > 0 ); 
-	this->myPolynome[Up::F] = u.myPolynome[Up::F+1];
-	///given points: 
-	std::copy( u.myPolynome.begin()+Up::F, u.myPolynome.end(), this->myPolynome.begin()+(Up::F+1) ); 
+	std::copy( u.myPolynome.begin(), u.myPolynome.end(), this->myPolynome.begin() ); 
+
+	// ///free points: 
+	// //all free points of u
+	// std::copy( u.myPolynome.begin(), u.myPolynome.begin()+Up::F, this->myPolynome.begin() ); 
+	// //+ the first (i.e. last added) fixed point of u
+	// ASSERT( Up::G > 0 ); 
+	// this->myPolynome[Up::F] = u.myPolynome[Up::F];
+	// ///given points: 
+	// std::copy( u.myPolynome.begin()+Up::F, u.myPolynome.end(), this->myPolynome.begin()+(Up::F+1) ); 
       }
 
     /**
