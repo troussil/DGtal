@@ -130,84 +130,16 @@ ballGenerator(double aCx, double aCy, double aR, bool aFlagIsCW)
 // Seidel algo
 ///////////////////////////////////////////////////////////////////////////////
 
-// template <typename I, typename S>
-// bool algo(const I& itb, const I& ite, S& aShape); 
-
-// template <typename I, typename P, typename S>
-// bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
-// {
-//   if (S::F > 0)
-//     {//at least one free point
-//       typename S::Up tmp = aShape.getUp( p ); 
-//       bool res = algo( itb, ite, tmp); 
-//       //trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
-//       aShape.initFromUp( tmp ); 
-//       //trace.info()  << "new init " << std::endl << aShape << std::endl; 
-//       return res; 
-//     }
-//   else 
-//     return false; 
-// }
-
-// template <typename I, typename S>
-// bool algo(const I& itb, const I& ite, S& aShape)
-// {
-
-//   //init: find as many as free points
-//   typedef typename S::Point Point; 
-//   boost::array<Point,S::F> a;
-//   unsigned int counter = 0;  
-//   for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
-//     {
-//       Point p = it->first; 
-//       while ( (it != ite)&&(p == it->first) ) ++it;  
-//       a[counter] = p; 
-//     }
-//   ASSERT( counter == S::F ); 
-//   aShape.init( a.begin(), a.end() ); 
-//   trace.info() << "Init: " << std::endl << aShape << std::endl; 
-//   //TODO init pb when if the three first points have the wrong orientation
-
-//   //main loop
-//   bool res = true; 
-//   for (I it = itb; ( (it != ite)&&(res) ); ++it)
-//     {
-
-//       //trace.info() << " new pair " << it->first << it->second << std::endl; 
-
-//       if ( aShape( it->first ) < 0 )
-// 	{//inner point outside
-// 	  res = algoUpdate( itb, it , it->first, aShape ); 
-// 	}
-//       if ( (res)&&( aShape( it->second ) > 0 ) )
-// 	{//outer point inside
-// 	  res = algoUpdate( itb, it, it->second, aShape ); 
-// 	}
-//     } 
-//   return res; 
-
-// }
-
-///////////////////////////////////////////////////////////////////////////////
-// Seidel algo II
-///////////////////////////////////////////////////////////////////////////////
-
 template <typename I, typename S>
 bool algo(const I& itb, const I& ite, S& aShape); 
 
-template <typename I, typename S>
-bool algoWithInit(const I& itb, const I& ite, S& aShape); 
-
-template <typename I, typename S>
-bool algoWithoutInit(const I& itb, const I& ite, S& aShape, bool res); 
-
 template <typename I, typename P, typename S>
-bool update(const I& itb, const I& ite, const P& p, S& aShape)
+bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 {
   if (S::F > 0)
     {//at least one free point
       typename S::Up tmp = aShape.getUp( p ); 
-      bool res = algoWithInit( itb, ite, tmp ); 
+      bool res = algo( itb, ite, tmp); 
       //trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
       aShape.initFromUp( tmp ); 
       //trace.info()  << "new init " << std::endl << aShape << std::endl; 
@@ -218,54 +150,26 @@ bool update(const I& itb, const I& ite, const P& p, S& aShape)
 }
 
 template <typename I, typename S>
-bool init(const I& itb, const I& ite, S& aShape)
-{
-  bool res = true; 
-
-  if (S::F > 1)
-    {//strictly more than one free point
-      typename S::Up tmp = aShape.getUp( aShape.toInfinity() );
-      res = init( itb, ite, tmp ); 
-      aShape.initFromUp( tmp );
-
-      if (!res) 
-	{
-	  //the first given point of tmp is its last free point, 
-	  //which stopped the recognition
-	  aShape.shift(); 
-	  res = true; 
-	}
-    }
-
-  if (res) 
-    {
-      //the only point to set now
-      //is set to the first inner point 
-      boost::array<typename S::Point,1> a;
-      a[0] = itb->first; 
-      aShape.init( a.begin(), a.end() ); 
-
-      res = algoWithoutInit( itb, ite, aShape, res ); 
-    }
-
-  return res; 
-}
-
-template <typename I, typename S>
 bool algo(const I& itb, const I& ite, S& aShape)
 {
 
-  //init
-  bool res = init( itb, ite, aShape ); 
+  //init: find as many as free points
+  typedef typename S::Point Point; 
+  boost::array<Point,S::F> a;
+  unsigned int counter = 0;  
+  for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
+    {
+      Point p = it->first; 
+      while ( (it != ite)&&(p == it->first) ) ++it;  
+      a[counter] = p; 
+    }
+  ASSERT( counter == S::F ); 
+  aShape.init( a.begin(), a.end() ); 
   trace.info() << "Init: " << std::endl << aShape << std::endl; 
+  //TODO init pb when if the three first points have the wrong orientation
 
   //main loop
-  return algoWithoutInit( itb, ite, aShape, res ); 
-}
-
-template <typename I, typename S>
-bool algoWithoutInit(const I& itb, const I& ite, S& aShape, bool res)
-{
+  bool res = true; 
   for (I it = itb; ( (it != ite)&&(res) ); ++it)
     {
 
@@ -273,35 +177,131 @@ bool algoWithoutInit(const I& itb, const I& ite, S& aShape, bool res)
 
       if ( aShape( it->first ) < 0 )
 	{//inner point outside
-	  res = update( itb, it , it->first, aShape ); 
+	  res = algoUpdate( itb, it , it->first, aShape ); 
 	}
       if ( (res)&&( aShape( it->second ) > 0 ) )
 	{//outer point inside
-	  res = update( itb, it, it->second, aShape ); 
+	  res = algoUpdate( itb, it, it->second, aShape ); 
 	}
     } 
   return res; 
+
 }
 
-template <typename I, typename S>
-bool algoWithInit(const I& itb, const I& ite, S& aShape)
-{
+///////////////////////////////////////////////////////////////////////////////
+// Seidel algo II
+///////////////////////////////////////////////////////////////////////////////
 
-  //init: find as many as free points
-  boost::array<typename S::Point,S::F> a;
-  unsigned int counter = 0;  
-  for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
-    {
-      typename S::Point p = it->first; 
-      while ( (it != ite)&&(p == it->first) ) ++it;  
-      a[counter] = p; 
-    }
-  ASSERT( counter == S::F ); 
-  aShape.init( a.begin(), a.end() ); 
+// template <typename I, typename S>
+// bool algo(const I& itb, const I& ite, S& aShape); 
 
-  //main loop
-  return algoWithoutInit( itb, ite, aShape, true ); 
-}
+// template <typename I, typename S>
+// bool algoWithInit(const I& itb, const I& ite, S& aShape); 
+
+// template <typename I, typename S>
+// bool algoWithoutInit(const I& itb, const I& ite, S& aShape, bool res); 
+
+// template <typename I, typename P, typename S>
+// bool update(const I& itb, const I& ite, const P& p, S& aShape)
+// {
+//   if (S::F > 0)
+//     {//at least one free point
+//       typename S::Up tmp = aShape.getUp( p ); 
+//       bool res = algoWithInit( itb, ite, tmp ); 
+//       //trace.info()  << "tmp     : " << std::endl << tmp << std::endl; 
+//       aShape.initFromUp( tmp ); 
+//       //trace.info()  << "new init " << std::endl << aShape << std::endl; 
+//       return res; 
+//     }
+//   else 
+//     return false; 
+// }
+
+// template <typename I, typename S>
+// bool init(const I& itb, const I& ite, S& aShape)
+// {
+//   bool res = true; 
+
+//   if (S::F > 1)
+//     {//strictly more than one free point
+//       typename S::Up tmp = aShape.getUp( aShape.toInfinity() );
+//       res = init( itb, ite, tmp ); 
+//       aShape.initFromUp( tmp );
+
+//       if (!res) 
+// 	{
+// 	  //the first given point of tmp is its last free point, 
+// 	  //which stopped the recognition
+// 	  aShape.shift(); 
+// 	  res = true; 
+// 	}
+//     }
+
+//   if (res) 
+//     {
+//       //the only point to set now
+//       //is set to the first inner point 
+//       boost::array<typename S::Point,1> a;
+//       a[0] = itb->first; 
+//       aShape.init( a.begin(), a.end() ); 
+
+//       res = algoWithoutInit( itb, ite, aShape, res ); 
+//     }
+
+//   return res; 
+// }
+
+// template <typename I, typename S>
+// bool algo(const I& itb, const I& ite, S& aShape)
+// {
+
+//   //init
+//   bool res = init( itb, ite, aShape ); 
+//   trace.info() << "Init: " << std::endl << aShape << std::endl; 
+
+//   //main loop
+//   return algoWithoutInit( itb, ite, aShape, res ); 
+// }
+
+// template <typename I, typename S>
+// bool algoWithoutInit(const I& itb, const I& ite, S& aShape, bool res)
+// {
+//   for (I it = itb; ( (it != ite)&&(res) ); ++it)
+//     {
+
+//       //trace.info() << " new pair " << it->first << it->second << std::endl; 
+
+//       if ( aShape( it->first ) < 0 )
+// 	{//inner point outside
+// 	  res = update( itb, it , it->first, aShape ); 
+// 	}
+//       if ( (res)&&( aShape( it->second ) > 0 ) )
+// 	{//outer point inside
+// 	  res = update( itb, it, it->second, aShape ); 
+// 	}
+//     } 
+//   return res; 
+// }
+
+// template <typename I, typename S>
+// bool algoWithInit(const I& itb, const I& ite, S& aShape)
+// {
+
+//   //init: find as many as free points
+//   boost::array<typename S::Point,S::F> a;
+//   unsigned int counter = 0;  
+//   for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
+//     {
+//       typename S::Point p = it->first; 
+//       while ( (it != ite)&&(p == it->first) ) ++it;  
+//       a[counter] = p; 
+//     }
+//   ASSERT( counter == S::F ); 
+//   aShape.init( a.begin(), a.end() ); 
+
+//   //main loop
+//   return algoWithoutInit( itb, ite, aShape, true ); 
+// }
 
 
 
