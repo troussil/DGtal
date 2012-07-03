@@ -311,7 +311,8 @@ bool algoWithInit(const I& itb, const I& ite, S& aShape)
 bool testBallRecognition()
 {
 
-  typedef KhalimskySpaceND<2,int> KSpace; 
+  typedef int Integer; 
+  typedef KhalimskySpaceND<2,Integer> KSpace; 
   GridCurve<KSpace> c; 
   
   unsigned int nbok = 0;
@@ -334,7 +335,7 @@ bool testBallRecognition()
       typedef GridCurve<KSpace>::IncidentPointsRange Range; 
       Range r = c.getIncidentPointsRange();
     
-      AlgebraicCurveFromOrderedPoints<3> circle; 
+      AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
       trace.info() << std::endl << "Solution: " << circle << std::endl; 
@@ -382,7 +383,7 @@ bool testAlgebraicCurveFromOrderedPoints()
 
   trace.beginBlock("Simple test for AlgebraicCurveFromOrderedPoints"); 
   
-  bool res = fun( AlgebraicCurveFromOrderedPoints<3,double>() ); 
+  bool res = fun( AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<double> >() ); 
 
   trace.endBlock(); 
   
@@ -395,8 +396,11 @@ bool testDeterminant()
 
   trace.beginBlock("Determinant test"); 
 
-  AlgebraicCurveFromOrderedPoints<3> c;
-  typedef AlgebraicCurveFromOrderedPoints<3>::Point Point; 
+  typedef AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<int> > Curve; 
+  typedef typename Curve::Point Point; 
+  typedef typename Curve::Value Det; 
+
+  Curve c;
   std::vector<Point> v; 
   v.push_back( Point(0,1) ); 
   v.push_back( Point(150,18) ); 
@@ -404,7 +408,6 @@ bool testDeterminant()
   c.init( v.begin(), v.end() ); 
   trace.info() << c << endl;
 
-  typedef AlgebraicCurveFromOrderedPoints<3>::Value Det;
   Det d = c( Point(0,0) );   
   trace.info() << Point(0,0) << " is at distance " << d << endl;
   bool res = true; 

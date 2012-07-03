@@ -54,17 +54,21 @@ namespace DGtal
 
   namespace details
   {
-    struct AlgebraicDistanceToCircle 
+    template<typename TInteger>
+    struct CircleFromPoints 
     {
     public: 
       static const DGtal::Dimension N = 3; 
 
+      typedef TInteger Integer;
+      typedef DGtal::PointVector<3,Integer> Point; 
+      typedef Integer Value;  //TODO to promote
+     
     public: 
-      template<typename Point>
-      typename Point::Coordinate //to promote
+      Integer
       operator() (const boost::array<Point, N>& a, const Point& aP) const 
       {
- 	typedef DGtal::PointVector<2,typename Point::Coordinate> Vector; 
+ 	typedef DGtal::PointVector<2,Integer> Vector; 
 
 	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
 		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
@@ -78,35 +82,55 @@ namespace DGtal
   // template class AlgebraicCurveFromOrderedPointsBase
   /**
    * \brief Aim: Represents an algebraic curve, which 
-   * is contrained to pass through @e F given points.
+   * is constrained to pass through @e F given points.
    *
-   * @tparam TDistance type of functor, which computes 
-   * the algebraic distance to the curve
+   * @tparam TPolynome type of the polynome interpolating 
+   * the @e F given points. It is a functor that returns 
+   * the algebraic distance of a point to the curve.
    *
    * @tparam F number of free points (between 0 and N, 
    * the maximal number of points that uniquely define
    * a given curve)
    *
    */
-    template <DGtal::Dimension F, typename TInteger = int, typename TDistance = AlgebraicDistanceToCircle>
+    template <typename TPolynome, DGtal::Dimension F = TPolynome::N, typename TInteger = typename TPolynome::Integer>
   struct AlgebraicCurveFromOrderedPointsBase
   {
 
     BOOST_STATIC_ASSERT((F >= 0 ));
-    BOOST_STATIC_ASSERT((F <= TDistance::N ));
+    BOOST_STATIC_ASSERT((F <= TPolynome::N ));
 
-	//total number of points
-	//(defining uniquely a circle)
-    static const DGtal::Dimension N = TDistance::N; 
- 	//number of given points 
+    /**
+     * Total number of points required
+     * to define uniquely the curve
+    */
+    static const DGtal::Dimension N = TPolynome::N; 
+    /**
+     * Total number of given points, 
+     * the curve has to pass through
+    */
     static const DGtal::Dimension G = N-F; 
 
     // ----------------------- associated types ------------------------------
+    /**
+     * Type of coordinate
+    */
     typedef TInteger Coordinate;
+    /**
+     * Type of point
+    */
     typedef DGtal::PointVector<2,Coordinate> Point; 
-    typedef DGtal::PointVector<3,Coordinate> HPoint; //in homogeneous coordinates 
+    /**
+     * Type of point in homogeneous coordinates 
+     * (one more coordinate, equal to 0 for point 
+     * at infinity and different otherwise)
+    */
+    typedef DGtal::PointVector<3,Coordinate> HPoint;
 
-    typedef Coordinate Value;//to promote or to adapt (-1, 0, 1) ?
+    /**
+     * Return type of the operator()
+    */
+    typedef Coordinate Value;//TODO to promote or to adapt (-1, 0, 1) ?
 
     typedef boost::array<HPoint,G> GArray;  //array of fixed points
     typedef boost::array<HPoint,F> FArray;  //array of variable points
@@ -114,11 +138,6 @@ namespace DGtal
 
     // ------------------------- Private Datas --------------------------------
   protected:
-    /**
-       Array of points (first V points, variable, last F points, fixed)
-    */
-    //    Array myArray;
-
     /**
        Array of fixed points
     */
@@ -130,7 +149,7 @@ namespace DGtal
     /**
      * Distance functor
     */
-    TDistance myDistance;
+    TPolynome myPolynome;
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -145,7 +164,8 @@ namespace DGtal
      * Constructor.
      * @param aGArray an array of given points
      */
-    AlgebraicCurveFromOrderedPointsBase(const GArray& aGArray): myGArray( aGArray ), myDistance() {};
+    AlgebraicCurveFromOrderedPointsBase(const GArray& aGArray): 
+      myGArray( aGArray ), myFArray(), myPolynome() {};
 
 
     /**
@@ -173,7 +193,7 @@ namespace DGtal
      */
 	template <typename Other>
 	AlgebraicCurveFromOrderedPointsBase ( const Other & other ): 
-	  myGArray( other.myGArray ), myFArray( other.myFArray ), myDistance( other.myDistance ) {};
+	  myGArray( other.myGArray ), myFArray( other.myFArray ), myPolynome( other.myPolynome ) {};
 
     /**
      * Assignment.
@@ -186,7 +206,7 @@ namespace DGtal
           {
             myGArray = other.myGArray; 
             myFArray = other.myFArray;
-	    myDistance = other.myDistance; 
+	    myPolynome = other.myPolynome; 
           }
 	return *this; 
       };
@@ -202,7 +222,7 @@ namespace DGtal
     /**
      * Fonction
      * @param aPoint any point.
-     * @return value (<0 in, 0 on, >0 out)
+     * @return value (<0, 0 on, >0 )
      */
     Value operator()(const Point& aP) const 
      {
@@ -210,7 +230,7 @@ namespace DGtal
 	//lexicographic order ?
 	std::copy( myFArray.begin(), myFArray.end(), tmp.begin() ); 
 	std::copy( myGArray.begin(), myGArray.end(), tmp.begin()+F ); 
-	return distance( tmp, toHPoint( aP ) ); 
+	return myPolynome(tmp, toHPoint( aP ) ); 
      }
 
     //------------------ useful functions -------------------------------
@@ -269,13 +289,6 @@ namespace DGtal
 	return tmp; 
      };
 
-    /**
-     * @return determinant sign (<0 in, 0 on, >0 out)
-     */
-    Value distance(const Array& a, const HPoint& aP) const 
-     { 
-       return myDistance(a, aP); 
-     };
 
   }; // end of class AlgebraicCurveFromOrderedPointsBase
 
@@ -284,18 +297,22 @@ namespace DGtal
   /////////////////////////////////////////////////////////////////////////////
   // template class AlgebraicCurveFromOrderedPoints
   /**
-   * \brief Aim: Represents an algebraic curve 
+   * \brief Aim: Represents an algebraic curve, which 
+   * is constrained to pass through @e F given points.
+   *
+   * @tparam TPolynome type of the polynome interpolating 
+   * the @e F given points. It is a functor that returns 
+   * the algebraic distance of a point to the curve.
+   *
+   * @tparam T number of free points (between 0 and N, 
+   * the maximal number of points that uniquely define
+   * a given curve)
    *
    */
-  template <DGtal::Dimension T, typename TInteger = int, typename TDistance = details::AlgebraicDistanceToCircle>
-  class AlgebraicCurveFromOrderedPoints: public details::AlgebraicCurveFromOrderedPointsBase<T,TInteger,TDistance>
+  template <typename TPolynome, DGtal::Dimension T = TPolynome::N, typename TInteger = typename TPolynome::Integer>
+  class AlgebraicCurveFromOrderedPoints: 
+    public details::AlgebraicCurveFromOrderedPointsBase<TPolynome, T, TInteger>
   {
-
-  public: 
-    /*
-     * (F+1)-class as friend for initFromUp methods
-     */
-    friend class AlgebraicCurveFromOrderedPoints<T+1, TInteger, TDistance>;  
 
     // ----------------------- Static constant ------------------------------
   public: 
@@ -304,20 +321,27 @@ namespace DGtal
      */
     static const DGtal::Dimension F = T;
 
+    // ----------------------- Friend class ------------------------------
+  public: 
+    /*
+     * (F+1)-class as friend for initFromUp methods
+     */
+    friend class AlgebraicCurveFromOrderedPoints<TPolynome, F+1, TInteger>;  
+
     // ----------------------- Nested type ------------------------------
   public: 
     /*
-     * This class (curve constrained to pass through G given points)
+     * This F-class (curve constrained to pass through G given points)
      */
-    typedef AlgebraicCurveFromOrderedPoints<F, TInteger, TDistance> Self;  
+    typedef AlgebraicCurveFromOrderedPoints<TPolynome, F, TInteger> Self;  
     /*
      * Type of the parent class
      */
-    typedef details::AlgebraicCurveFromOrderedPointsBase<F, TInteger, TDistance> Super; 
+    typedef details::AlgebraicCurveFromOrderedPointsBase<TPolynome, F, TInteger> Super; 
     /*
      * Type of the (F-1)-class (curve contrained to pass through G+1 given points) 
      */
-    typedef AlgebraicCurveFromOrderedPoints<F-1, TInteger, TDistance> Up; 
+    typedef AlgebraicCurveFromOrderedPoints<TPolynome, F-1, TInteger> Up; 
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -405,16 +429,10 @@ namespace DGtal
 
   /////////////////////////////////////////////////////////////////////////////
   // Specialization
-  template <typename TInteger, typename TDistance>
-  class AlgebraicCurveFromOrderedPoints<0,TInteger,TDistance>: 
-    public details::AlgebraicCurveFromOrderedPointsBase<0, TInteger, TDistance>
+  template <typename TPolynome, typename TInteger>
+  class AlgebraicCurveFromOrderedPoints<TPolynome, 0, TInteger>: 
+    public details::AlgebraicCurveFromOrderedPointsBase<TPolynome, 0, TInteger>
   {
-
-  public: 
-    /*
-     * (1)-class as friend for initFromUp methods
-     */
-    friend class AlgebraicCurveFromOrderedPoints<1, TInteger>;  
 
     // ----------------------- Static constant ------------------------------
   public: 
@@ -423,16 +441,23 @@ namespace DGtal
      */
     static const DGtal::Dimension F = 0;
 
+    // ----------------------- Friend class  ------------------------------
+  public: 
+    /*
+     * (1)-class as friend for initFromUp methods
+     */
+    friend class AlgebraicCurveFromOrderedPoints<TPolynome, 1, TInteger>;  
+
     // ----------------------- Nested type ------------------------------
   public: 
     /*
      * Self type
      */
-    typedef AlgebraicCurveFromOrderedPoints<0, TInteger, TDistance> Self; 
+    typedef AlgebraicCurveFromOrderedPoints<TPolynome, 0, TInteger> Self; 
     /*
      * Type of the parent class
      */
-    typedef details::AlgebraicCurveFromOrderedPointsBase<0, TInteger, TDistance> Super; 
+    typedef details::AlgebraicCurveFromOrderedPointsBase<TPolynome, 0, TInteger> Super; 
     /*
      * Type of the (F-1)-class defined as an alias of Self (= 0) 
      */
@@ -509,11 +534,11 @@ namespace DGtal
    * @param object the object of class 'AlgebraicCurveFromOrderedPoints' to write.
    * @return the output stream after the writing.
    */
-  template <DGtal::Dimension T, typename TInteger, typename TDistance>
+  template <typename TPolynome, DGtal::Dimension T, typename TInteger>
   inline
   std::ostream&
   operator<< ( std::ostream & out, 
-	       const details::AlgebraicCurveFromOrderedPointsBase<T, TInteger, TDistance> & object )
+	       const details::AlgebraicCurveFromOrderedPointsBase<TPolynome, T, TInteger> & object )
   {
     object.selfDisplay( out );
     return out;
