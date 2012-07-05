@@ -47,6 +47,7 @@
 #include "DGtal/kernel/PointVector.h"
 #include "DGtal/kernel/NumberTraits.h"
 #include "DGtal/io/Color.h"
+#include <Eigen/Dense>
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
@@ -68,15 +69,44 @@ namespace DGtal
       typedef Integer Value;  //TODO to promote
      
     public: 
-      Integer
+      Value
       operator() (const Point& aP) const 
       {
-	typedef DGtal::PointVector<2,Integer> Vector; 
-
 	const Point* a = this->data(); 
 	ASSERT( a ); 
-
 	
+	//matrix 4x4, 10s pour reconnaitre 50 cercles de rayon [100-200)
+	// Integer z1 = (a[0][0]*a[0][0]+a[0][1]*a[0][1]); 
+	// Integer z2 = (a[1][0]*a[1][0]+a[1][1]*a[1][1]); 
+	// Integer z3 = (a[2][0]*a[2][0]+a[2][1]*a[2][1]); 
+	// Integer z4 = aP[0]*aP[0] + aP[1]*aP[1]; 
+	// Eigen::Matrix4i m; 
+	// m << a[0][0], a[1][0], a[2][0], aP[0],
+	//   a[0][1], a[1][1], a[2][1], aP[1],
+	//   z1, z2, z3, z4,  
+	//   a[0][2], a[1][2], a[2][2], aP[2]; 
+
+	//matrix 3x3, 8s
+	// Integer z1 = (a[0][0]-aP[0])*(a[0][0]-aP[0]) + (a[0][1]-aP[1])*(a[0][1]-aP[1]); 
+	// Integer z2 = (a[1][0]-aP[0])*(a[1][0]-aP[0]) + (a[1][1]-aP[1])*(a[1][1]-aP[1]); 
+	// Integer z3 = (a[2][0]-aP[0])*(a[2][0]-aP[0]) + (a[2][1]-aP[1])*(a[2][1]-aP[1]); 
+	// Eigen::Matrix3i m; 
+	// m << (a[0][0]-aP[0]), (a[1][0]-aP[0]), (a[2][0]-aP[0]), 
+	//   (a[0][1]-aP[1]), (a[1][1]-aP[1]), (a[2][1]-aP[1]), 
+	//   z1, z2, z3; 
+	// return -m.determinant(); 
+
+	//matrix 2x2, 6.6s
+	// Eigen::Matrix2i m; 
+	// m << 
+	//   (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
+	//   (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]), 
+	//   (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
+	//   (a[2][0]-aP[0])*(a[2][0]-a[0][0])+(a[2][1]-aP[1])*(a[2][1]-a[0][1]) ; 
+	// return -m.determinant(); 
+	  
+	//2 vecteurs, 6.2s
+	typedef DGtal::PointVector<2,Integer> Vector; 
 	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
 		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
 	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
@@ -84,6 +114,45 @@ namespace DGtal
 	return -( (u[0] * v[1]) - (u[1] * v[0]) ); 
       }
     }; 
+
+    //polynome that can be interpolated from 5 points
+    //and that defines an ellipse
+    template<typename TInteger>
+    struct EllipseFromPoints: 
+      public boost::array< DGtal::PointVector<3,TInteger>, 5 >
+    {
+    public: 
+      static const DGtal::Dimension N = 5; 
+      
+      typedef TInteger Integer;
+      typedef DGtal::PointVector<3,Integer> Point; 
+      typedef BigInteger Value;  //TODO to promote
+     
+    public: 
+      Value
+      operator() (const Point& aP) const 
+      {
+	const Point* a = this->data(); 
+	ASSERT( a ); 
+	
+	//matrix 6x6
+	typedef Eigen::Matrix<BigInteger, 6, 6> Matrix; 
+	Matrix m; 
+	m << 
+	  a[0][0]*a[0][0], a[1][0]*a[1][0], a[2][0]*a[2][0], a[3][0]*a[3][0], a[4][0]*a[4][0], aP[0]*aP[0],//x^2
+	  a[0][0]*a[0][1], a[1][0]*a[1][1], a[2][0]*a[2][1], a[3][0]*a[3][1], a[4][0]*a[4][1], aP[0]*aP[1],//xy
+	  a[0][1]*a[0][1], a[1][1]*a[1][1], a[2][1]*a[2][1], a[3][1]*a[3][1], a[4][1]*a[4][1], aP[1]*aP[1],//y^2
+	  a[0][0], a[1][0], a[2][0], a[3][0], a[4][0], aP[0],//x
+	  a[0][1], a[1][1], a[2][1], a[3][1], a[4][1], aP[1],//y
+	  1, 1, 1, 1, 1, 1; 
+	//std::cout << m << std::endl
+	BigInteger b = m.determinant(); 
+	std::cout << b << std::endl;
+	//PB cast BigInteger int cannot be done in Eigen
+	return -m.determinant();
+      }
+    }; 
+
   /////////////////////////////////////////////////////////////////////////////
   // template class AlgebraicCurveFromOrderedPointsBase
   /**
@@ -137,14 +206,14 @@ namespace DGtal
     /**
      * Return type of the operator()
     */
-    typedef Coordinate Value;//TODO to promote or to adapt (-1, 0, 1) ?
+    typedef typename TPolynome::Value Value;
     /**
      * Type of polynome defined by interpolation
     */
     typedef TPolynome Polynome;
 
 
-    typedef boost::array<HPoint,G> GArray;  //array of fixed points
+        typedef boost::array<HPoint,G> GArray;  //array of fixed points
     // typedef boost::array<HPoint,F> FArray;  //array of variable points
     // typedef boost::array<HPoint,N> Array;  //array of all points
 
@@ -261,6 +330,7 @@ namespace DGtal
 
     //------------------ useful functions -------------------------------
 
+    //TODO to remove
     /**
      * Return a point to infinity (last homogeneous coordinate set to 0).
      * @return the point.
@@ -319,6 +389,7 @@ namespace DGtal
     // ------------------------- Internals ------------------------------------
   protected:
 
+    //TODO to remove
     /**
      * @return @e aPoint in homogeneous coordinates.
      * (the last coordinate is set to 1)

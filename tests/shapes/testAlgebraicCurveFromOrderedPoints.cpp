@@ -152,6 +152,7 @@ bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 template <typename I, typename S>
 bool init(const I& itb, const I& ite, S& aShape)
 {
+  trace.info() << "pre init: " << std::endl << aShape << std::endl; 
 
   bool res = true; 
 
@@ -206,13 +207,14 @@ bool init(const I& itb, const I& ite, S& aShape)
 		  ++counter; 
 		  priorOut = out; 
 		}
+	      ++it; 
 	    }
 	}
 
-
+      //TODO method of aShape for counter < S::F
       ASSERT( counter == S::F ); //TODO return false instead
       aShape.init( a.begin(), a.end() ); 
-      //trace.info() << "Init: " << std::endl << aShape << std::endl; 
+      trace.info() << "Init: " << std::endl << aShape << std::endl; 
 
     }
   
@@ -233,11 +235,14 @@ bool algo(const I& itb, const I& ite, S& aShape)
 
       //trace.info() << " new pair " << it->first << it->second << std::endl; 
 
-      if ( aShape( it->first ) < 0 )
+      
+      //      if ( aShape( it->first ) < 0 )
+	if ( cmp( aShape( it->first ), 0) )
 	{//inner point outside
 	  res = algoUpdate( itb, it , it->first, aShape ); 
 	}
-      if ( (res)&&( aShape( it->second ) > 0 ) )
+	//      if ( (res)&&( aShape( it->second ) > 0 ) )
+	if ( (res)&&( cmp( aShape( it->second ), 0 ) ) )
 	{//outer point inside
 	  res = algoUpdate( itb, it, it->second, aShape ); 
 	}
@@ -378,12 +383,12 @@ bool testBallRecognition()
 
   trace.beginBlock ( "Recognition" );
   
-  for (unsigned int i = 0; i < 50; ++i)
+  for (unsigned int i = 0; i < /*50*/1; ++i)
     {
       //generate digital circle
       double cx = (rand()%100 ) / 100.0;
       double cy = (rand()%100 ) / 100.0;
-      double radius = (rand()%100 )+100;
+      double radius = (rand()%100 )/*+100*/;
       // double cx = 0, cy = 0; 
       // double radius = 5.0; 
       c = ballGenerator<KSpace>( cx, cy, radius, ((i%2)==1) ); 
@@ -393,7 +398,8 @@ bool testBallRecognition()
       typedef GridCurve<KSpace>::IncidentPointsRange Range; 
       Range r = c.getIncidentPointsRange();
     
-      AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
+      //AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
+      AlgebraicCurveFromOrderedPoints<details::EllipseFromPoints<Integer> > circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
       //trace.info() << std::endl << "Solution: " << circle << std::endl; 
@@ -493,6 +499,7 @@ int main( int argc, char** argv )
 
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
   trace.endBlock();
+
   
   return res ? 0 : 1;
 }
