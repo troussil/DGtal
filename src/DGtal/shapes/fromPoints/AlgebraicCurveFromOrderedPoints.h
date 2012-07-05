@@ -126,7 +126,7 @@ namespace DGtal
       
       typedef TInteger Integer;
       typedef DGtal::PointVector<3,Integer> Point; 
-      typedef BigInteger Value;  //TODO to promote
+      typedef double Value; 
      
     public: 
       Value
@@ -135,21 +135,37 @@ namespace DGtal
 	const Point* a = this->data(); 
 	ASSERT( a ); 
 	
-	//matrix 6x6
-	typedef Eigen::Matrix<BigInteger, 6, 6> Matrix; 
+	// //matrix 6x6, does not work. int (BigInt) or double => imprecision
+	// typedef Eigen::Matrix<Value, 6, 6> Matrix; 
+	// Matrix m; 
+	// m << 
+	//   a[0][0]*a[0][0], a[1][0]*a[1][0], a[2][0]*a[2][0], a[3][0]*a[3][0], a[4][0]*a[4][0], aP[0]*aP[0],//x^2
+	//   a[0][0]*a[0][1], a[1][0]*a[1][1], a[2][0]*a[2][1], a[3][0]*a[3][1], a[4][0]*a[4][1], aP[0]*aP[1],//xy
+	//   a[0][1]*a[0][1], a[1][1]*a[1][1], a[2][1]*a[2][1], a[3][1]*a[3][1], a[4][1]*a[4][1], aP[1]*aP[1],//y^2
+	//   a[0][0], a[1][0], a[2][0], a[3][0], a[4][0], aP[0],//x
+	//   a[0][1], a[1][1], a[2][1], a[3][1], a[4][1], aP[1],//y
+	//   1, 1, 1, 1, 1, 1; 
+	// //std::cout << m << std::endl
+	// Value b = m.determinant(); 
+	// std::cout << b << std::endl;
+	// //PB cast BigInteger int cannot be done in Eigen
+	// return -m.determinant();
+
+	//TODO: try other methods than determinant or inversion (is Inversible, etc.)
+
+	//better, but does not work
+	typedef Eigen::Matrix<Value, 5, 5> Matrix; 
 	Matrix m; 
 	m << 
-	  a[0][0]*a[0][0], a[1][0]*a[1][0], a[2][0]*a[2][0], a[3][0]*a[3][0], a[4][0]*a[4][0], aP[0]*aP[0],//x^2
-	  a[0][0]*a[0][1], a[1][0]*a[1][1], a[2][0]*a[2][1], a[3][0]*a[3][1], a[4][0]*a[4][1], aP[0]*aP[1],//xy
-	  a[0][1]*a[0][1], a[1][1]*a[1][1], a[2][1]*a[2][1], a[3][1]*a[3][1], a[4][1]*a[4][1], aP[1]*aP[1],//y^2
-	  a[0][0], a[1][0], a[2][0], a[3][0], a[4][0], aP[0],//x
-	  a[0][1], a[1][1], a[2][1], a[3][1], a[4][1], aP[1],//y
-	  1, 1, 1, 1, 1, 1; 
-	//std::cout << m << std::endl
-	BigInteger b = m.determinant(); 
-	std::cout << b << std::endl;
-	//PB cast BigInteger int cannot be done in Eigen
+	  (a[0][0]-aP[0])*(a[0][0]-aP[0]), (a[1][0]-aP[0])*(a[1][0]-aP[0]), (a[2][0]-aP[0])*(a[2][0]-aP[0]), (a[3][0]-aP[0])*(a[3][0]-aP[0]), (a[4][0]-aP[0])*(a[4][0]-aP[0]), //x^2
+	  (a[0][0]- aP[0])*(a[0][1]- aP[1]), (a[1][0]- aP[0])*(a[1][1]- aP[1]), (a[2][0]- aP[0])*(a[2][1]- aP[1]), (a[3][0]- aP[0])*(a[3][1]- aP[1]), (a[4][0]- aP[0])*(a[4][1]- aP[1]),//xy
+	  (a[0][1]-aP[1])*(a[0][1]-aP[1]), (a[1][1]-aP[1])*(a[1][1]-aP[1]), (a[2][1]-aP[1])*(a[2][1]-aP[1]), (a[3][1]-aP[1])*(a[3][1]-aP[1]), (a[4][1]-aP[1])*(a[4][1]-aP[1]), //y^2
+	  a[0][0]-aP[0], a[1][0]-aP[0], a[2][0]-aP[0], a[3][0]-aP[0], a[4][0]-aP[0],//x
+	  a[0][1]-aP[1], a[1][1]-aP[1], a[2][1]-aP[1], a[3][1]-aP[1], a[4][1]-aP[1]//y 
+	  ; 
+	std::cout << m.determinant() << std::endl;
 	return -m.determinant();
+
       }
     }; 
 

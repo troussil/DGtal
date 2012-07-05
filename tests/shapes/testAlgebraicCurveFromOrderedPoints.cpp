@@ -236,13 +236,13 @@ bool algo(const I& itb, const I& ite, S& aShape)
       //trace.info() << " new pair " << it->first << it->second << std::endl; 
 
       
-      //      if ( aShape( it->first ) < 0 )
-	if ( cmp( aShape( it->first ), 0) )
+      if ( aShape( it->first ) < 0 )
+      //	if ( cmp( aShape( it->first ), 0) )
 	{//inner point outside
 	  res = algoUpdate( itb, it , it->first, aShape ); 
 	}
-	//      if ( (res)&&( aShape( it->second ) > 0 ) )
-	if ( (res)&&( cmp( aShape( it->second ), 0 ) ) )
+      if ( (res)&&( aShape( it->second ) > 0 ) )
+	//	if ( (res)&&( cmp( aShape( it->second ), 0 ) ) )
 	{//outer point inside
 	  res = algoUpdate( itb, it, it->second, aShape ); 
 	}
