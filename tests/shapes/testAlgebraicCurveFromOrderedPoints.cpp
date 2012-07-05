@@ -150,26 +150,84 @@ bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 }
 
 template <typename I, typename S>
+bool init(const I& itb, const I& ite, S& aShape)
+{
+
+  bool res = true; 
+
+  if (S::F > 0)
+    {
+
+      //init: find as many as free points
+      typedef typename S::Point Point; 
+      boost::array<Point,S::F> a;
+      unsigned int counter = 0;  
+
+      // //the F first inner points
+      // for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
+      //   {
+      //     Point p = it->first; 
+      //     while ( (it != ite)&&(p == it->first) ) ++it;  
+      //     a[counter] = p; 
+      //   }
+      //the F first inner points
+      //init pb when if the three first points have the wrong orientation
+
+      //the F first inner/outer points not confounded
+      if (itb != ite)
+	{
+	  //the two first points
+	  Point priorIn = itb->first; 
+	  a[counter] = priorIn;
+	  ++counter; 
+	  Point priorOut = itb->second;
+	  if (counter < S::F)
+	    {
+	      a[counter] = priorOut; 
+	      ++counter; 
+	    }
+
+	  I it = itb; 
+	  ++it;       
+	  while ( (it != ite)&&(counter < S::F) ) 
+	    {
+	      Point in = it->first; 
+	      if (in != priorIn) 
+		{
+		  a[counter] = in;
+		  ++counter; 
+		  priorIn = in; 
+		}
+
+	      Point out = it->second; 
+	      if ( (out != priorOut)&&(counter < S::F) ) 
+		{
+		  a[counter] = out;
+		  ++counter; 
+		  priorOut = out; 
+		}
+	    }
+	}
+
+
+      ASSERT( counter == S::F ); //TODO return false instead
+      aShape.init( a.begin(), a.end() ); 
+      //trace.info() << "Init: " << std::endl << aShape << std::endl; 
+
+    }
+  
+  return res;  
+
+}
+
+template <typename I, typename S>
 bool algo(const I& itb, const I& ite, S& aShape)
 {
 
-  //init: find as many as free points
-  typedef typename S::Point Point; 
-  boost::array<Point,S::F> a;
-  unsigned int counter = 0;  
-  for (I it = itb; ( (it != ite)&&(counter < S::F) ); ++counter)
-    {
-      Point p = it->first; 
-      while ( (it != ite)&&(p == it->first) ) ++it;  
-      a[counter] = p; 
-    }
-  ASSERT( counter == S::F ); 
-  aShape.init( a.begin(), a.end() ); 
-  //trace.info() << "Init: " << std::endl << aShape << std::endl; 
-  //TODO init pb when if the three first points have the wrong orientation
+  //init
+  bool res = init( itb, ite, aShape ); 
 
   //main loop
-  bool res = true; 
   for (I it = itb; ( (it != ite)&&(res) ); ++it)
     {
 
@@ -320,12 +378,12 @@ bool testBallRecognition()
 
   trace.beginBlock ( "Recognition" );
   
-  for (unsigned int i = 0; i < 1; ++i)
+  for (unsigned int i = 0; i < 50; ++i)
     {
       //generate digital circle
       double cx = (rand()%100 ) / 100.0;
       double cy = (rand()%100 ) / 100.0;
-      double radius = (rand()%100 )+0;
+      double radius = (rand()%100 )+100;
       // double cx = 0, cy = 0; 
       // double radius = 5.0; 
       c = ballGenerator<KSpace>( cx, cy, radius, ((i%2)==1) ); 
@@ -338,7 +396,7 @@ bool testBallRecognition()
       AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
-      trace.info() << std::endl << "Solution: " << circle << std::endl; 
+      //trace.info() << std::endl << "Solution: " << circle << std::endl; 
 
       //conclusion
       nbok += (flag && circle.isValid()) ? 1 : 0; 

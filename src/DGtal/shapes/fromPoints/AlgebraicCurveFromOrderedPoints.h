@@ -76,6 +76,7 @@ namespace DGtal
 	const Point* a = this->data(); 
 	ASSERT( a ); 
 
+	
 	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
 		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
 	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 
@@ -126,6 +127,7 @@ namespace DGtal
      * Type of point
     */
     typedef DGtal::PointVector<2,Coordinate> Point; 
+    ///////////////////////////////////////////////////// TODO remove points with homogeneous coordinates
     /**
      * Type of point in homogeneous coordinates 
      * (one more coordinate, equal to 0 for point 
