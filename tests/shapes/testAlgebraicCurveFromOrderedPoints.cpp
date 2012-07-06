@@ -399,8 +399,8 @@ bool testBallRecognition()
       typedef GridCurve<KSpace>::IncidentPointsRange Range; 
       Range r = c.getIncidentPointsRange();
     
-      AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
-      //AlgebraicCurveFromOrderedPoints<details::EllipseFromPoints<Integer> > circle; 
+      //AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
+      AlgebraicCurveFromOrderedPoints<details::EllipseFromPoints<Integer> > circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
       //trace.info() << std::endl << "Solution: " << circle << std::endl; 
