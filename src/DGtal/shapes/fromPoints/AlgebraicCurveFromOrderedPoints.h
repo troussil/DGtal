@@ -163,8 +163,8 @@ namespace DGtal
 	  a[0][0]-aP[0], a[1][0]-aP[0], a[2][0]-aP[0], a[3][0]-aP[0], a[4][0]-aP[0],//x
 	  a[0][1]-aP[1], a[1][1]-aP[1], a[2][1]-aP[1], a[3][1]-aP[1], a[4][1]-aP[1]//y 
 	  ; 
-	std::cout << m.determinant() << std::endl;
-	return -m.determinant();
+	std::cout << m.fullPivLu().determinant() << std::endl;
+	return -m.fullPivLu().determinant();
 
       }
     }; 

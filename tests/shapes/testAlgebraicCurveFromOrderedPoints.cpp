@@ -152,6 +152,7 @@ bool algoUpdate(const I& itb, const I& ite, const P& p, S& aShape)
 template <typename I, typename S>
 bool init(const I& itb, const I& ite, S& aShape)
 {
+
   trace.info() << "pre init: " << std::endl << aShape << std::endl; 
 
   bool res = true; 
@@ -233,7 +234,7 @@ bool algo(const I& itb, const I& ite, S& aShape)
   for (I it = itb; ( (it != ite)&&(res) ); ++it)
     {
 
-      //trace.info() << " new pair " << it->first << it->second << std::endl; 
+      trace.info() << " new pair " << it->first << it->second << std::endl; 
 
       
       if ( aShape( it->first ) < 0 )
@@ -398,8 +399,8 @@ bool testBallRecognition()
       typedef GridCurve<KSpace>::IncidentPointsRange Range; 
       Range r = c.getIncidentPointsRange();
     
-      //AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
-      AlgebraicCurveFromOrderedPoints<details::EllipseFromPoints<Integer> > circle; 
+      AlgebraicCurveFromOrderedPoints<details::CircleFromPoints<Integer> > circle; 
+      //AlgebraicCurveFromOrderedPoints<details::EllipseFromPoints<Integer> > circle; 
       bool flag = algo( r.begin(), r.end(), circle);
 
       //trace.info() << std::endl << "Solution: " << circle << std::endl; 
