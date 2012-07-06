@@ -66,7 +66,7 @@ namespace DGtal
 
       typedef TInteger Integer;
       typedef DGtal::PointVector<3,Integer> Point; 
-      typedef Integer Value;  //TODO to promote
+      typedef BigInteger Value;  //TODO to promote
      
     public: 
       Value
@@ -106,7 +106,7 @@ namespace DGtal
 	// return -m.determinant(); 
 	  
 	//2 vecteurs, 6.2s
-	typedef DGtal::PointVector<2,Integer> Vector; 
+	typedef DGtal::PointVector<2,Value> Vector; 
 	Vector u( (a[0][0]-aP[0])*(a[1][1]-aP[1])-  (a[1][0]-aP[0])*(a[0][1]-aP[1]), 
 		  (a[1][0]-aP[0])*(a[1][0]-a[0][0])+(a[1][1]-aP[1])*(a[1][1]-a[0][1]) );
 	Vector v( (a[0][0]-aP[0])*(a[2][1]-aP[1])-  (a[2][0]-aP[0])*(a[0][1]-aP[1]), 

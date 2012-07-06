@@ -153,7 +153,7 @@ template <typename I, typename S>
 bool init(const I& itb, const I& ite, S& aShape)
 {
 
-  trace.info() << "pre init: " << std::endl << aShape << std::endl; 
+  //trace.info() << "pre init: " << std::endl << aShape << std::endl; 
 
   bool res = true; 
 
@@ -215,7 +215,7 @@ bool init(const I& itb, const I& ite, S& aShape)
       //TODO method of aShape for counter < S::F
       ASSERT( counter == S::F ); //TODO return false instead
       aShape.init( a.begin(), a.end() ); 
-      trace.info() << "Init: " << std::endl << aShape << std::endl; 
+      //trace.info() << "Init: " << std::endl << aShape << std::endl; 
 
     }
   
@@ -234,7 +234,7 @@ bool algo(const I& itb, const I& ite, S& aShape)
   for (I it = itb; ( (it != ite)&&(res) ); ++it)
     {
 
-      trace.info() << " new pair " << it->first << it->second << std::endl; 
+      //trace.info() << " new pair " << it->first << it->second << std::endl; 
 
       
       if ( aShape( it->first ) < 0 )
@@ -384,12 +384,12 @@ bool testBallRecognition()
 
   trace.beginBlock ( "Recognition" );
   
-  for (unsigned int i = 0; i < /*50*/1; ++i)
+  for (unsigned int i = 0; i < 50; ++i)
     {
       //generate digital circle
       double cx = (rand()%100 ) / 100.0;
       double cy = (rand()%100 ) / 100.0;
-      double radius = (rand()%100 )/*+100*/;
+      double radius = (rand()%100 )+100;
       // double cx = 0, cy = 0; 
       // double radius = 5.0; 
       c = ballGenerator<KSpace>( cx, cy, radius, ((i%2)==1) ); 
